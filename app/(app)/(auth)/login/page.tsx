@@ -1,66 +1,105 @@
 'use client';
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { BookOpen, AlertCircle, Mail } from 'lucide-react';
+import { useSignIn } from '@/hooks/useAccount';
+import { useSignUp } from '@/hooks/useAccount';
+import { redirect } from 'next/navigation';
 
 interface LoginScreenProps {
   onLogin: (username: string, password: string) => boolean;
 }
 
+const signInSchema = z.object({
+  email: z
+    .string()
+    .min(1, 'El correo electrónico es requerido')
+    .email('Correo electrónico inválido'),
+  password: z
+    .string()
+    .min(1, 'La contraseña es requerida'),
+});
+
+const signUpSchema = z.object({
+  email: z
+    .string()
+    .min(1, 'El correo electrónico es requerido')
+    .email('Correo electrónico inválido'),
+  password: z
+    .string()
+    .min(1, 'La contraseña es requerida')
+    .min(9, 'La contraseña debe tener más de 8 caracteres')
+    .refine((value) => {
+      const uppercaseCount = (value.match(/[A-Z]/g) || []).length;
+      return uppercaseCount > 0;
+    }, 'La contraseña debe tener más de 1 mayúscula')
+    .refine((value) => {
+      const lowercaseCount = (value.match(/[a-z]/g) || []).length;
+      return lowercaseCount > 0;
+    }, 'La contraseña debe tener más de 1 minúscula')
+    .refine((value) => {
+      const numberCount = (value.match(/[0-9]/g) || []).length;
+      return numberCount > 0;
+    }, 'La contraseña debe tener más de 1 número')
+    .refine((value) => {
+      const symbolCount = (value.match(/[^A-Za-z0-9]/g) || []).length;
+      return symbolCount > 0;
+    }, 'La contraseña debe tener más de 1 símbolo'),
+});
+
+type SignInFormData = z.infer<typeof signInSchema>;
+type SignUpFormData = z.infer<typeof signUpSchema>;
+
 export default function LoginScreen({ onLogin }: LoginScreenProps) {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'signin' | 'signup'>('signin');
+  const { mutate: signIn } = useSignIn();
+  const { mutate: signUp } = useSignUp();
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setIsLoading(true);
+  const signInForm = useForm<SignInFormData>({
+    resolver: zodResolver(signInSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
 
-    setTimeout(() => {
-      const loginSuccess = onLogin(username, password);
-      if (!loginSuccess) {
-        setError('Correo o contraseña incorrectos');
-      }
-      setIsLoading(false);
-    }, 500);
+  const signUpForm = useForm<SignUpFormData>({
+    resolver: zodResolver(signUpSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
+
+  const handleLogin = async (data: SignInFormData) => {
+    signIn({ email: data.email, password: data.password });
+    redirect('/inicio');
+
   };
 
-  const handleRegister = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setSuccess('');
-    setIsLoading(true);
-
-    setTimeout(() => {
-      if (password.length < 6) {
-        setError('La contraseña debe tener al menos 6 caracteres');
-        setIsLoading(false);
-        return;
-      }
-
-      setSuccess('¡Cuenta creada exitosamente! Ahora puedes iniciar sesión.');
-      setUsername('');
-      setPassword('');
-      setIsLoading(false);
-      
-      setTimeout(() => {
-        setActiveTab('signin');
-        setSuccess('');
-      }, 2000);
-    }, 500);
+  const handleRegister = async (data: SignUpFormData) => {
+    signUp({ email: data.email, password: data.password });
+    resetForms();
+    setActiveTab('signin');
   };
 
-  const resetForm = () => {
-    setUsername('');
-    setPassword('');
-    setError('');
+  const resetForms = () => {
+    signInForm.reset();
+    signUpForm.reset();
     setSuccess('');
   };
 
@@ -95,7 +134,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
             <button
               onClick={() => {
                 setActiveTab('signin');
-                resetForm();
+                resetForms();
               }}
               className="flex-1 py-2 px-3 sm:px-4 rounded-lg transition-all text-sm sm:text-base"
               style={{
@@ -108,7 +147,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
             <button
               onClick={() => {
                 setActiveTab('signup');
-                resetForm();
+                resetForms();
               }}
               className="flex-1 py-2 px-3 sm:px-4 rounded-lg transition-all text-sm sm:text-base"
               style={{
@@ -122,132 +161,163 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
 
           {/* Sign In Form */}
           {activeTab === 'signin' && (
-            <form onSubmit={handleLogin} className="space-y-4 sm:space-y-5 flex-1">
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-xs sm:text-sm" style={{ color: '#ffffff' }}>Correo Electrónico</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" style={{ color: '#cccccc' }} />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="Ingresa tu correo"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    required
-                    disabled={isLoading}
-                    className="pl-10 h-11 sm:h-12 text-sm sm:text-base"
-                    style={{ 
-                      background: 'rgba(255, 255, 255, 0.1)', 
-                      borderColor: '#00A3E2',
-                      color: '#ffffff'
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-xs sm:text-sm" style={{ color: '#ffffff' }}>Contraseña</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Ingresa tu contraseña"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  disabled={isLoading}
-                  className="h-11 sm:h-12 text-sm sm:text-base"
-                  style={{ 
-                    background: 'rgba(255, 255, 255, 0.1)', 
-                    borderColor: '#00A3E2',
-                    color: '#ffffff'
-                  }}
+            <Form {...signInForm}>
+              <form onSubmit={signInForm.handleSubmit(handleLogin)} className="space-y-4 sm:space-y-5 flex-1">
+                <FormField
+                  control={signInForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs sm:text-sm" style={{ color: '#ffffff' }}>
+                        Correo Electrónico
+                      </FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" style={{ color: '#cccccc' }} />
+                          <Input
+                            {...field}
+                            type="email"
+                            placeholder="Ingresa tu correo"
+                            disabled={signInForm.formState.isSubmitting}
+                            className="pl-10 h-11 sm:h-12 text-sm sm:text-base"
+                            style={{ 
+                              background: 'rgba(255, 255, 255, 0.1)', 
+                              borderColor: '#00A3E2',
+                              color: '#ffffff'
+                            }}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
 
-              {error && (
-                <Alert variant="destructive" className="py-2 sm:py-3">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription className="text-xs sm:text-sm">{error}</AlertDescription>
-                </Alert>
-              )}
+                <FormField
+                  control={signInForm.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs sm:text-sm" style={{ color: '#ffffff' }}>
+                        Contraseña
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="password"
+                          placeholder="Ingresa tu contraseña"
+                          disabled={signInForm.formState.isSubmitting}
+                          className="h-11 sm:h-12 text-sm sm:text-base"
+                          style={{ 
+                            background: 'rgba(255, 255, 255, 0.1)', 
+                            borderColor: '#00A3E2',
+                            color: '#ffffff'
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <Button 
-                type="submit" 
-                className="w-full h-11 sm:h-12 text-sm rounded-lg" 
-                disabled={isLoading}
-                style={{ background: '#00A3E2', color: '#ffffff' }}
-              >
-                {isLoading ? 'Iniciando sesión...' : 'Continuar'}
-              </Button>
-            </form>
+                {signInForm.formState.errors.root && (
+                  <Alert variant="destructive" className="py-2 sm:py-3">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription className="text-xs sm:text-sm">
+                      {signInForm.formState.errors.root.message}
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                <Button 
+                  type="submit" 
+                  className="w-full h-11 sm:h-12 text-sm rounded-lg" 
+                  disabled={signInForm.formState.isSubmitting}
+                  style={{ background: '#00A3E2', color: '#ffffff' }}
+                >
+                  {signInForm.formState.isSubmitting ? 'Iniciando sesión...' : 'Continuar'}
+                </Button>
+              </form>
+            </Form>
           )}
 
           {/* Sign Up Form */}
           {activeTab === 'signup' && (
-            <form onSubmit={handleRegister} className="space-y-4 sm:space-y-5 flex-1">
-              <div className="space-y-2">
-                <Label htmlFor="email-register" className="text-xs sm:text-sm" style={{ color: '#ffffff' }}>Correo Electrónico</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" style={{ color: '#cccccc' }} />
-                  <Input
-                    id="email-register"
-                    type="email"
-                    placeholder="Ingresa tu correo"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    required
-                    disabled={isLoading}
-                    className="pl-10 h-11 sm:h-12 text-sm sm:text-base"
-                    style={{ 
-                      background: 'rgba(255, 255, 255, 0.1)', 
-                      borderColor: '#00A3E2',
-                      color: '#ffffff'
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="password-register" className="text-xs sm:text-sm" style={{ color: '#ffffff' }}>Contraseña</Label>
-                <Input
-                  id="password-register"
-                  type="password"
-                  placeholder="Crea una contraseña"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  disabled={isLoading}
-                  className="h-11 sm:h-12 text-sm sm:text-base"
-                  style={{ 
-                    background: 'rgba(255, 255, 255, 0.1)', 
-                    borderColor: '#00A3E2',
-                    color: '#ffffff'
-                  }}
+            <Form {...signUpForm}>
+              <form onSubmit={signUpForm.handleSubmit(handleRegister)} className="space-y-4 sm:space-y-5 flex-1">
+                <FormField
+                  control={signUpForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs sm:text-sm" style={{ color: '#ffffff' }}>
+                        Correo Electrónico
+                      </FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" style={{ color: '#cccccc' }} />
+                          <Input
+                            {...field}
+                            type="email"
+                            placeholder="Ingresa tu correo"
+                            disabled={signUpForm.formState.isSubmitting}
+                            className="pl-10 h-11 sm:h-12 text-sm sm:text-base"
+                            style={{ 
+                              background: 'rgba(255, 255, 255, 0.1)', 
+                              borderColor: '#00A3E2',
+                              color: '#ffffff'
+                            }}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
 
-              {error && (
-                <Alert variant="destructive" className="py-2 sm:py-3">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription className="text-xs sm:text-sm">{error}</AlertDescription>
-                </Alert>
-              )}
+                <FormField
+                  control={signUpForm.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs sm:text-sm" style={{ color: '#ffffff' }}>
+                        Contraseña
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="password"
+                          placeholder="Crea una contraseña"
+                          disabled={signUpForm.formState.isSubmitting}
+                          className="h-11 sm:h-12 text-sm sm:text-base"
+                          style={{ 
+                            background: 'rgba(255, 255, 255, 0.1)', 
+                            borderColor: '#00A3E2',
+                            color: '#ffffff'
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              {success && (
-                <Alert className="py-2 sm:py-3" style={{ background: '#e8f5e9', borderColor: '#4caf50', color: '#2e7d32' }}>
-                  <AlertDescription className="text-xs sm:text-sm">{success}</AlertDescription>
-                </Alert>
-              )}
+                {success && (
+                  <Alert className="py-2 sm:py-3" style={{ background: '#e8f5e9', borderColor: '#4caf50', color: '#2e7d32' }}>
+                    <AlertDescription className="text-xs sm:text-sm">{success}</AlertDescription>
+                  </Alert>
+                )}
 
-              <Button 
-                type="submit" 
-                className="w-full h-11 sm:h-12 text-sm rounded-lg" 
-                disabled={isLoading}
-                style={{ background: '#00A3E2', color: '#ffffff' }}
-              >
-                {isLoading ? 'Creando cuenta...' : 'Crear cuenta'}
-              </Button>
-            </form>
+                <Button 
+                  type="submit" 
+                  className="w-full h-11 sm:h-12 text-sm rounded-lg" 
+                  disabled={signUpForm.formState.isSubmitting}
+                  style={{ background: '#00A3E2', color: '#ffffff' }}
+                >
+                  {signUpForm.formState.isSubmitting ? 'Creando cuenta...' : 'Crear cuenta'}
+                </Button>
+              </form>
+            </Form>
           )}
 
           {/* Footer Text */}
