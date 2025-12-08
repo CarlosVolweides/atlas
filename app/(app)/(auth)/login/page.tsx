@@ -17,7 +17,8 @@ import {
 import { BookOpen, AlertCircle, Mail } from 'lucide-react';
 import { useSignIn } from '@/hooks/useAccount';
 import { useSignUp } from '@/hooks/useAccount';
-import { redirect } from 'next/navigation';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 interface LoginScreenProps {
   onLogin: (username: string, password: string) => boolean;
@@ -66,6 +67,7 @@ type SignUpFormData = z.infer<typeof signUpSchema>;
 export default function LoginScreen({ onLogin }: LoginScreenProps) {
   const [success, setSuccess] = useState('');
   const [activeTab, setActiveTab] = useState<'signin' | 'signup'>('signin');
+  const router = useRouter();
   const { mutate: signIn } = useSignIn();
   const { mutate: signUp } = useSignUp();
 
@@ -86,9 +88,15 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
   });
 
   const handleLogin = async (data: SignInFormData) => {
-    signIn({ email: data.email, password: data.password });
-    redirect('/inicio');
-
+    signIn(
+      { email: data.email, password: data.password },
+      {
+        onSuccess: (response) => {
+          console.log('Login exitoso:', response);
+          router.push('/');
+        }
+      }
+    );
   };
 
   const handleRegister = async (data: SignUpFormData) => {

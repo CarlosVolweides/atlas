@@ -1,6 +1,6 @@
 "use client";
 import { useState } from 'react';
-import { redirect } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { BookOpen, Search, Settings, LogOut, Plus, User } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -12,7 +12,6 @@ import { LeccionCard } from '@/components/LeccionCard';
 import { Leccion } from '@/types/leccion';
 import { leccionesInicialesEjemplo, crearNuevaLeccion } from './mocks';
 import { useLogout } from '@/hooks/useAccount';
-
 export default function InicioScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -20,12 +19,14 @@ export default function InicioScreen() {
   const [editandoIndex, setEditandoIndex] = useState<number | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [leccionAbierta, setLeccionAbierta] = useState<number | null>(null);
-
+  const router = useRouter();
   const { mutate: logout } = useLogout();
 
   const handleLogout = () => {
     logout();
-    redirect('/');
+    setTimeout(() => {
+      router.push('/');
+    }, 1000);
   };
 
   // Calcular porcentaje basado en subtemas completados
@@ -69,7 +70,7 @@ export default function InicioScreen() {
   // Si hay una lección abierta, mostrar el visor de lección
   if (leccionAbierta !== null && lecciones[leccionAbierta]) {
     return (
-      redirect(`/leccion/${lecciones[leccionAbierta].nombre}`)
+      router.push(`/leccion/${lecciones[leccionAbierta].nombre}`)
     );
   }
 
