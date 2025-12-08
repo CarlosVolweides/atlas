@@ -5,7 +5,7 @@ import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 
-interface LeccionCardProps {
+interface CursoCardProps {
   nombre: string;
   porcentaje: number;
   tecnologias: string[];
@@ -13,7 +13,7 @@ interface LeccionCardProps {
   onDelete?: () => void;
 }
 
-export function LeccionCard({ nombre, porcentaje, tecnologias, onEdit, onDelete }: LeccionCardProps) {
+export function CursoCard({ nombre, porcentaje, tecnologias, onEdit, onDelete }: CursoCardProps) {
   return (
     <Card 
       className="overflow-hidden transition-all hover:scale-105 cursor-pointer"

@@ -4,7 +4,7 @@ export interface Subtema {
     completado: boolean;
   }
   
-export interface Leccion {
+export interface Curso {
     nombre: string;
     porcentaje: number;
     tecnologias: string[];

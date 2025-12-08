@@ -1,7 +1,7 @@
-import { Leccion } from "@/types/leccion";
+import { Curso } from "@/types/course";
 
-// Datos de ejemplo para las lecciones iniciales
-export const leccionesInicialesEjemplo: Leccion[] = [
+// Datos de ejemplo para los cursos iniciales
+export const cursosInicialesEjemplo: Curso[] = [
     {
       nombre: 'Fundamentos de React',
       porcentaje: 75,
@@ -76,11 +76,11 @@ export const leccionesInicialesEjemplo: Leccion[] = [
   ];
 
 
-// Crear nueva lección con los datos del formulario
-    export const crearNuevaLeccion = (datos: { tema: string; dificultad: string; conocimientosPrevios: string }): Leccion => {
+// Crear nuevo curso con los datos del formulario
+    export const crearNuevoCurso = (datos: { tema: string; dificultad: string; conocimientosPrevios: string }): Curso => {
         return {
         nombre: datos.tema,
-        porcentaje: 0, // Nueva lección empieza en 0%
+        porcentaje: 0, // Nuevo subtema empieza en 0%
         tecnologias: [datos.dificultad.charAt(0).toUpperCase() + datos.dificultad.slice(1)], // Mostrar la dificultad como tecnología
         subtemas: [
           {

@@ -8,69 +8,67 @@ import { Card } from '@/components/ui/card';
 //import { CrearLeccionModal } from '@/components/CrearLeccionModal';
 //import { EditarNombreLeccionModal } from '@/components/EditarNombreLeccionModal';
 //import { LeccionViewer } from '@/components/LeccionViewer';
-import { LeccionCard } from '@/components/LeccionCard';
-import { Leccion } from '@/types/leccion';
-import { leccionesInicialesEjemplo, crearNuevaLeccion } from './mocks';
+import { CursoCard } from '@/components/CursoCard';
+import { Curso } from '@/types/course';
+import { cursosInicialesEjemplo, crearNuevoCurso } from './mocks';
 import { useLogout } from '@/hooks/useAccount';
 export default function InicioScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [lecciones, setLecciones] = useState<Leccion[]>(leccionesInicialesEjemplo);
+  const [cursos, setCursos] = useState<Curso[]>(cursosInicialesEjemplo);
   const [editandoIndex, setEditandoIndex] = useState<number | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [leccionAbierta, setLeccionAbierta] = useState<number | null>(null);
+  const [cursoAbierto, setCursoAbierto] = useState<number | null>(null);
   const router = useRouter();
   const { mutate: logout } = useLogout();
 
   const handleLogout = () => {
     logout();
-    setTimeout(() => {
-      router.push('/');
-    }, 1000);
+    router.push('/');
   };
 
   // Calcular porcentaje basado en subtemas completados
-  const calcularPorcentaje = (leccion: Leccion): number => {
-    if (leccion.subtemas.length === 0) return 0;
-    const completados = leccion.subtemas.filter(s => s.completado).length;
-    return Math.round((completados / leccion.subtemas.length) * 100);
+  const calcularPorcentaje = (curso: Curso): number => {
+    if (curso.subtemas.length === 0) return 0;
+    const completados = curso.subtemas.filter(s => s.completado).length;
+    return Math.round((completados / curso.subtemas.length) * 100);
   };
 
-  const handleCrearLeccion = (datos: { tema: string; dificultad: string; conocimientosPrevios: string }) => {
+  const handleCrearCurso = (datos: { tema: string; dificultad: string; conocimientosPrevios: string }) => {
 
-    const nuevaLeccion = crearNuevaLeccion(datos);
+    const nuevoCurso = crearNuevoCurso(datos);
 
-    // Agregar la nueva lección al inicio de la lista
-    setLecciones([nuevaLeccion, ...lecciones]);
+    // Agregar el nuevo curso al inicio de la lista
+    setCursos([nuevoCurso, ...cursos]);
     
-    console.log('Nueva lección creada:', datos);
+    console.log('Nuevo curso creado:', nuevoCurso);
   };
 
-  const handleEditarLeccion = (index: number) => {
+  const handleEditarCurso = (index: number) => {
     setEditandoIndex(index);
     setIsEditModalOpen(true);
   };
 
   const handleGuardarNombre = (nuevoNombre: string) => {
     if (editandoIndex !== null) {
-      const leccionesActualizadas = [...lecciones];
-      leccionesActualizadas[editandoIndex] = {
-        ...leccionesActualizadas[editandoIndex],
+      const cursosActualizados = [...cursos];
+      cursosActualizados[editandoIndex] = {
+        ...cursosActualizados[editandoIndex],
         nombre: nuevoNombre
       };
-      setLecciones(leccionesActualizadas);
+      setCursos(cursosActualizados);
     }
   };
 
-  const handleEliminarLeccion = (index: number) => {
-    const leccionesActualizadas = lecciones.filter((_, i) => i !== index);
-    setLecciones(leccionesActualizadas);
+  const handleEliminarCurso = (index: number) => {
+    const cursosActualizados = cursos.filter((_, i) => i !== index);
+    setCursos(cursosActualizados);
   };
 
-  // Si hay una lección abierta, mostrar el visor de lección
-  if (leccionAbierta !== null && lecciones[leccionAbierta]) {
+  // Si hay un curso abierto, mostrar el visor de curso
+  if (cursoAbierto !== null && cursos[cursoAbierto]) {
     return (
-      router.push(`/leccion/${lecciones[leccionAbierta].nombre}`)
+      router.push(`/curso/${cursos[cursoAbierto].nombre}`)
     );
   }
 
@@ -144,10 +142,10 @@ export default function InicioScreen() {
       <div className="flex-1 overflow-y-auto px-8 py-6">
         <div className="max-w-7xl mx-auto">
           <h2 className="mb-6 text-3xl" style={{ color: '#ffffff' }}>
-            Mis Lecciones
+            Mis Cursos
           </h2>
           
-          {/* Card de Crear Lección */}
+          {/* Card de Crear Curso */}
           <Card 
             className="mb-6 cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg"
             onClick={() => setIsModalOpen(true)}
@@ -167,21 +165,21 @@ export default function InicioScreen() {
                 <Plus className="w-6 h-6 text-white" />
               </div>
               <span className="text-xl" style={{ color: '#ffffff' }}>
-                Crear lección
+                Crear curso
               </span>
             </div>
           </Card>
           
           {/* Grid de 3 columnas */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {lecciones.map((leccion, index) => (
-              <div key={index} onClick={() => setLeccionAbierta(index)}>
-                <LeccionCard
-                  nombre={leccion.nombre}
-                  porcentaje={calcularPorcentaje(leccion)}
-                  tecnologias={leccion.tecnologias}
-                  onEdit={() => handleEditarLeccion(index)}
-                  onDelete={() => handleEliminarLeccion(index)}
+            {cursos.map((curso, index) => (
+              <div key={index} onClick={() => setCursoAbierto(index)}>
+                <CursoCard
+                  nombre={curso.nombre}
+                  porcentaje={calcularPorcentaje(curso)}
+                  tecnologias={curso.tecnologias}
+                  onEdit={() => handleEditarCurso(index)}
+                  onDelete={() => handleEliminarCurso(index)}
                 />
               </div>
             ))}
@@ -189,16 +187,16 @@ export default function InicioScreen() {
         </div>
       </div>
 {/*
-      <CrearLeccionModal 
+      <CrearCursoModal 
         open={isModalOpen}
         onOpenChange={setIsModalOpen}
-        onCrearLeccion={handleCrearLeccion}
+        onCrearCurso={handleCrearCurso}
       />
 
-      <EditarNombreLeccionModal 
+      <EditarNofmbreCursoModal 
         open={isEditModalOpen}
         onOpenChange={setIsEditModalOpen}
-        nombreActual={editandoIndex !== null ? lecciones[editandoIndex]?.nombre : ''}
+        nombreActual={editandoIndex !== null ? cursos[editandoIndex]?.nombre : ''}
         onGuardar={handleGuardarNombre}
       />
       */}
