@@ -9,13 +9,13 @@ import { Card } from '@/components/ui/card';
 //import { EditarNombreLeccionModal } from '@/components/EditarNombreLeccionModal';
 //import { LeccionViewer } from '@/components/LeccionViewer';
 import { CursoCard } from '@/components/CursoCard';
-import { Curso } from '@/types/course';
+import { CursoCardI } from '@/types/course';
 import { cursosInicialesEjemplo, crearNuevoCurso } from './mocks';
 import { useLogout } from '@/hooks/useAccount';
 export default function InicioScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [cursos, setCursos] = useState<Curso[]>(cursosInicialesEjemplo);
+  const [cursos, setCursos] = useState<CursoCardI[]>(cursosInicialesEjemplo);
   const [editandoIndex, setEditandoIndex] = useState<number | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [cursoAbierto, setCursoAbierto] = useState<number | null>(null);
@@ -28,7 +28,7 @@ export default function InicioScreen() {
   };
 
   // Calcular porcentaje basado en subtemas completados
-  const calcularPorcentaje = (curso: Curso): number => {
+  const calcularPorcentaje = (curso: CursoCardI): number => {
     if (curso.subtemas.length === 0) return 0;
     const completados = curso.subtemas.filter(s => s.completado).length;
     return Math.round((completados / curso.subtemas.length) * 100);
