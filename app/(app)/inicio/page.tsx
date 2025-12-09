@@ -5,13 +5,14 @@ import { BookOpen, Search, Settings, LogOut, Plus, User } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Card } from '@/components/ui/card';
-//import { CrearLeccionModal } from '@/components/CrearLeccionModal';
+import { CrearCursoModal } from '@/components/CrearCursoModal';
 //import { EditarNombreLeccionModal } from '@/components/EditarNombreLeccionModal';
 //import { LeccionViewer } from '@/components/LeccionViewer';
 import { CursoCard } from '@/components/CursoCard';
 import { CursoCardI } from '@/types/course';
 import { cursosInicialesEjemplo, crearNuevoCurso } from './mocks';
 import { useLogout } from '@/hooks/useAccount';
+import { useCourses } from '@/hooks/useCourse';
 export default function InicioScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -21,10 +22,13 @@ export default function InicioScreen() {
   const [cursoAbierto, setCursoAbierto] = useState<number | null>(null);
   const router = useRouter();
   const { mutate: logout } = useLogout();
+  const { data: cursosData } = useCourses();
 
   const handleLogout = () => {
     logout();
-    router.push('/');
+    setTimeout(() => {
+      router.push('/');
+    }, 1000);
   };
 
   // Calcular porcentaje basado en subtemas completados
@@ -121,7 +125,7 @@ export default function InicioScreen() {
             <DropdownMenuItem 
               className="cursor-pointer" 
               style={{ color: '#ffffff' }}
-              onClick={() => {}}
+              onClick={() => {console.log("si hay cursos:", cursosData);}}
             >
               <Settings className="w-4 h-4 mr-2" />
               Configuración
@@ -186,13 +190,12 @@ export default function InicioScreen() {
           </div>
         </div>
       </div>
-{/*
       <CrearCursoModal 
         open={isModalOpen}
         onOpenChange={setIsModalOpen}
         onCrearCurso={handleCrearCurso}
       />
-
+{/*
       <EditarNofmbreCursoModal 
         open={isEditModalOpen}
         onOpenChange={setIsEditModalOpen}

@@ -1,3 +1,10 @@
+export interface Curso {
+  id: string;
+  nombre: string;
+  dificultad: string;
+  conocimientosPrevios: string[];
+}
+
 export interface Subtema {
     titulo: string;
     contenido: string;

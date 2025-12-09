@@ -1,7 +1,7 @@
-import { Curso } from "@/types/course";
+import { CursoCardI } from "@/types/course";
 
 // Datos de ejemplo para los cursos iniciales
-export const cursosInicialesEjemplo: Curso[] = [
+export const cursosInicialesEjemplo: CursoCardI[] = [
     {
       nombre: 'Fundamentos de React',
       porcentaje: 75,
@@ -77,7 +77,7 @@ export const cursosInicialesEjemplo: Curso[] = [
 
 
 // Crear nuevo curso con los datos del formulario
-    export const crearNuevoCurso = (datos: { tema: string; dificultad: string; conocimientosPrevios: string }): Curso => {
+    export const crearNuevoCurso = (datos: { tema: string; dificultad: string; conocimientosPrevios: string }): CursoCardI => {
         return {
         nombre: datos.tema,
         porcentaje: 0, // Nuevo subtema empieza en 0%

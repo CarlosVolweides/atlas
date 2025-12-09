@@ -1,5 +1,6 @@
 import { AccountService } from "@/lib/services/account";
 import { CreateAccountParams, LoginParams } from "@/types/account";
+import { AuthTokenResponsePassword } from "@supabase/supabase-js";
 import { useMutation, useQueryClient } from "react-query";
 import { toast } from "sonner";
 
