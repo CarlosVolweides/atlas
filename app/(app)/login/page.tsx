@@ -124,7 +124,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
         {/* Right Panel - Form */}
         <div className="w-full md:w-1/2 p-6 sm:p-8 md:p-12 flex flex-col" style={{ background: 'linear-gradient(135deg, rgba(0, 10, 20, 0.9) 0%, rgba(0, 30, 50, 0.85) 50%, rgba(0, 60, 90, 0.8) 100%)', backdropFilter: 'blur(20px)', borderLeft: '1px solid rgba(0, 163, 226, 0.2)' }}>
           {/* Logo */}
-          <div className="flex items-center gap-2 mb-6 sm:mb-8 md:mb-12">
+          <div className="flex items-center gap-2 mb-6 sm:mb-8 md:mb-8"> {/*Cambiar margin bottom a menor*/}
             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #00A3E2 0%, #006b9a 100%)' }}>
               <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
             </div>
@@ -209,6 +209,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                       <FormLabel className="text-xs sm:text-sm" style={{ color: '#ffffff' }}>
                         Contraseña
                       </FormLabel>
+                      <FormMessage />
                       <FormControl>
                         <Input
                           {...field}
@@ -223,7 +224,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                           }}
                         />
                       </FormControl>
-                      <FormMessage />
+                      
                     </FormItem>
                   )}
                 />

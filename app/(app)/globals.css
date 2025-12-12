@@ -1715,7 +1715,7 @@
   }
 
   .focus\:bg-accent:focus {
-    background-color: var(--accent);
+    background-color: var( --chart-3);
   }
 
   .focus\:text-accent-foreground:focus {
