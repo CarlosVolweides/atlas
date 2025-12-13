@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     }
 
     const system = [
-      "Eres un planificador instruccional.",
+      "Eres un planificador instruccional. Hola mi gente",
       "Devuelve SOLO JSON válido con este shape:",
       `{
         "outlineVersion": 1,
