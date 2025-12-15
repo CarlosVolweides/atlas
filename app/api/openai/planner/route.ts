@@ -40,6 +40,7 @@ export async function POST(req: NextRequest) {
       "- Respeta límites/antiobjetivos del perfil (p. ej., si indica 'no TypeScript', no lo incluyas).\n" +
       "- 'objective' = 1-2 frases; cada 'description' = 1-3 frases; sin bloques de código (puedes mencionar APIs/comandos breves inline).\n" +
       "- No agregues claves distintas a las del shape. No incluyas placeholders.\n" +
+      "- No agreges /'Proyecto Final'/ o cualquiera otra cosa que no sea netamente contenido de aprendizaje."
       "- El JSON debe ser parseable tal cual.";
 
     const completion = await openai.chat.completions.create({
