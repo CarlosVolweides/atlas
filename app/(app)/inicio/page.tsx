@@ -10,9 +10,9 @@ import { CrearCursoModal } from '@/components/CrearCursoModal';
 //import { LeccionViewer } from '@/components/LeccionViewer';
 import { CursoCard } from '@/components/CursoCard';
 import { CursoCardI } from '@/types/course';
-import { cursosInicialesEjemplo, crearNuevoCurso } from './mocks';
+import { cursosInicialesEjemplo } from './mocks';
 import { useLogout } from '@/hooks/useAccount';
-import { useCourses } from '@/hooks/useCourse';
+import { useCourses, useCreateCourse } from '@/hooks/useCourse';
 export default function InicioScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -23,7 +23,7 @@ export default function InicioScreen() {
   const router = useRouter();
   const { mutate: logout } = useLogout();
   const { data: cursosData } = useCourses();
-
+  const { mutate: createCourse } = useCreateCourse();
   const handleLogout = () => {
     logout();
     setTimeout(() => {
@@ -38,14 +38,23 @@ export default function InicioScreen() {
     return Math.round((completados / curso.subtemas.length) * 100);
   };
 
-  const handleCrearCurso = (datos: { tema: string; dificultad: string; conocimientosPrevios: string }) => {
-
-    const nuevoCurso = crearNuevoCurso(datos);
-
-    // Agregar el nuevo curso al inicio de la lista
-    setCursos([nuevoCurso, ...cursos]);
-    
-    console.log('Nuevo curso creado:', nuevoCurso);
+  const handleCrearCurso = (datos: { 
+    tecnologiaPrincipal: string;
+    razonCurso: string;
+    indispensables?: string | undefined;
+    conocimientosPrevios?: string | undefined;
+    tecnologiasFueraAlcance?: string | undefined;
+    dificultad: string;
+  }) => {
+    createCourse({
+      tecnologiaPrincipal: datos.tecnologiaPrincipal,
+      dificultad: datos.dificultad,
+      razonCurso: datos.razonCurso,
+      requiredTools: datos.indispensables?.split(','),
+      priorKnowledge: datos.conocimientosPrevios?.split(','),
+      outOfScope: datos.tecnologiasFueraAlcance?.split(','),
+    });
+    console.log('Nuevo curso creado:', datos);
   };
 
   const handleEditarCurso = (index: number) => {

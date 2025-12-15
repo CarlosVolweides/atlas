@@ -17,3 +17,12 @@ export interface CursoCardI {
     tecnologias: string[];
     subtemas: Subtema[];
   }
+
+export interface CreateCourseParams {
+    tecnologiaPrincipal: string;
+    dificultad: string;
+    razonCurso: string;
+    requiredTools?: string[];
+    priorKnowledge?: string[];
+    outOfScope?: string[];
+}

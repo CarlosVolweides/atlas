@@ -1,42 +1,98 @@
 "use client";
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Checkbox } from './ui/checkbox';
+import { Label } from './ui/label';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from './ui/form';
 import { BookOpen } from 'lucide-react';
+
+const crearCursoSchema = z.object({
+  tecnologiaPrincipal: z.string().min(1, 'La tecnología principal es requerida'),
+  dificultad: z.enum(['basico', 'intermedio', 'avanzado'], {
+    message: 'El nivel de dificultad es requerido',
+  }),
+  razonCurso: z.string().min(1, 'Debes explicar para qué deseas hacer este curso'),
+  indispensables: z.string().optional(),
+  conocimientosPrevios: z.string().optional(),
+  tecnologiasFueraAlcance: z.string().optional(),
+});
+
+type CrearCursoFormData = z.infer<typeof crearCursoSchema>;
 
 interface CrearCursoModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCrearCurso?: (datos: { tema: string; dificultad: string; conocimientosPrevios: string }) => void;
+  onCrearCurso?: (datos: { 
+    tecnologiaPrincipal: string; 
+    dificultad: string;
+    razonCurso: string;
+    indispensables?: string; 
+    conocimientosPrevios?: string; 
+    tecnologiasFueraAlcance?: string;
+  }) => void;
 }
 
 export function CrearCursoModal({ open, onOpenChange, onCrearCurso }: CrearCursoModalProps) {
-  const [tema, setTema] = useState('');
-  const [dificultad, setDificultad] = useState('');
-  const [conocimientosPrevios, setConocimientosPrevios] = useState('');
+  const [configuracionAvanzada, setConfiguracionAvanzada] = useState(false);
+  
+  const form = useForm<CrearCursoFormData>({
+    resolver: zodResolver(crearCursoSchema),
+    defaultValues: {
+      tecnologiaPrincipal: '',
+      dificultad: undefined as any,
+      razonCurso: '',
+      indispensables: '',
+      conocimientosPrevios: '',
+      tecnologiasFueraAlcance: '',
+    },
+  });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (tema && dificultad) {
-      onCrearCurso?.({ tema, dificultad, conocimientosPrevios });
-      
-      // Resetear formulario
-      setTema('');
-      setDificultad('');
-      setConocimientosPrevios('');
-      onOpenChange(false);
+  useEffect(() => {
+    if (open) {
+      form.reset();
+      setConfiguracionAvanzada(false);
+    }
+  }, [open, form]);
+
+  const handleConfiguracionAvanzadaChange = (checked: boolean) => {
+    setConfiguracionAvanzada(checked);
+    if (!checked) {
+      form.setValue('indispensables', '');
+      form.setValue('conocimientosPrevios', '');
+      form.setValue('tecnologiasFueraAlcance', '');
     }
   };
 
+  const handleSubmit = (data: CrearCursoFormData) => {
+    onCrearCurso?.({
+      tecnologiaPrincipal: data.tecnologiaPrincipal,
+      dificultad: data.dificultad,
+      razonCurso: data.razonCurso,
+      indispensables: data.indispensables || undefined,
+      conocimientosPrevios: data.conocimientosPrevios || undefined,
+      tecnologiasFueraAlcance: data.tecnologiasFueraAlcance || undefined,
+    });
+    
+    form.reset();
+    onOpenChange(false);
+  };
+
   const handleCancel = () => {
-    setTema('');
-    setDificultad('');
-    setConocimientosPrevios('');
+    form.reset();
     onOpenChange(false);
   };
 
@@ -64,128 +120,269 @@ export function CrearCursoModal({ open, onOpenChange, onCrearCurso }: CrearCurso
             </DialogTitle>
           </div>
           <DialogDescription className="text-xs sm:text-sm" style={{ color: '#cccccc' }}>
-            Define el tema, dificultad y conocimientos previos para que el sistema planifique tu curso personalizado.
+            Define la tecnología principal y opciones adicionales para que el sistema planifique tu curso personalizado.
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4 py-2">
-          {/* Campo Tema */}
-          <div className="space-y-2">
-            <Label htmlFor="tema" className="text-xs sm:text-sm" style={{ color: '#ffffff' }}>
-              Tema *
-            </Label>
-            <Input
-              id="tema"
-              type="text"
-              placeholder="Ej: Fundamentos de React"
-              value={tema}
-              onChange={(e) => setTema(e.target.value)}
-              required
-              className="h-10 sm:h-11 text-sm sm:text-base"
-              style={{ 
-                background: 'rgba(255, 255, 255, 0.1)', 
-                borderColor: '#00A3E2',
-                color: '#ffffff'
-              }}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-3 sm:space-y-4 py-2">
+            {/* Campo Tecnología Principal */}
+            <FormField
+              control={form.control}
+              name="tecnologiaPrincipal"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-xs sm:text-sm" style={{ color: '#ffffff' }}>
+                    Tecnología Principal a Aprender
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      type="text"
+                      placeholder="Ej: React, Python, Next.js, Laravel, etc."
+                      className="h-10 sm:h-11 text-sm sm:text-base"
+                      style={{ 
+                        background: 'rgba(255, 255, 255, 0.1)', 
+                        borderColor: '#00A3E2',
+                        color: '#ffffff'
+                      }}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          {/* Campo Dificultad */}
-          <div className="space-y-2">
-            <Label htmlFor="dificultad" className="text-xs sm:text-sm" style={{ color: '#ffffff' }}>
-              Dificultad *
-            </Label>
-            <Select value={dificultad} onValueChange={setDificultad} required>
-              <SelectTrigger 
-                className="h-10 sm:h-11 text-sm sm:text-base"
+            {/* Campo Dificultad */}
+            <FormField
+              control={form.control}
+              name="dificultad"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-xs sm:text-sm" style={{ color: '#ffffff' }}>
+                    Nivel de Dificultad
+                  </FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger 
+                        className="h-10 sm:h-11 text-sm sm:text-base"
+                        style={{ 
+                          background: 'rgba(255, 255, 255, 0.1)', 
+                          borderColor: '#00A3E2',
+                          color: field.value ? '#ffffff' : '#999999'
+                        }}
+                      >
+                        <SelectValue placeholder="Selecciona el nivel de dificultad" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent 
+                      style={{ 
+                        background: '#262422', 
+                        borderColor: '#00A3E2'
+                      }}
+                    >
+                      <SelectItem 
+                        value="basico"
+                        style={{ color: '#ffffff' }}
+                      >
+                        Básico
+                      </SelectItem>
+                      <SelectItem 
+                        value="intermedio"
+                        style={{ color: '#ffffff' }}
+                      >
+                        Intermedio
+                      </SelectItem>
+                      <SelectItem 
+                        value="avanzado"
+                        style={{ color: '#ffffff' }}
+                      >
+                        Avanzado
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Campo Razón del Curso */}
+            <FormField
+              control={form.control}
+              name="razonCurso"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-xs sm:text-sm" style={{ color: '#ffffff' }}>
+                    ¿Para qué deseas hacer este curso?
+                  </FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Ej: Quiero aprender React para desarrollar una aplicaciones web para la universidad y mejorar mis habilidades en el fronted"
+                      rows={4}
+                      className="text-sm sm:text-base"
+                      style={{ 
+                        background: 'rgba(255, 255, 255, 0.1)', 
+                        borderColor: '#00A3E2',
+                        color: '#ffffff',
+                        resize: 'none'
+                      }}
+                      {...field}
+                    />
+                  </FormControl>
+                  <p className="text-xs" style={{ color: '#999999' }}>
+                    Explica las razones y objetivos por los que deseas realizar este curso
+                  </p>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Checkbox Configuración Avanzada */}
+            <div className="flex items-center space-x-2 py-2">
+              <Checkbox
+                id="configuracionAvanzada"
+                checked={configuracionAvanzada}
+                onCheckedChange={handleConfiguracionAvanzadaChange}
+                style={{ 
+                  borderColor: '#00A3E2',
+                }}
+              />
+              <Label
+                htmlFor="configuracionAvanzada"
+                className="text-xs sm:text-sm cursor-pointer"
+                style={{ color: '#ffffff' }}
+              >
+                Configuración avanzada
+              </Label>
+            </div>
+
+            {/* Campos de Configuración Avanzada */}
+            {configuracionAvanzada && (
+              <>
+                {/* Campo Herramientas Indispensables */}
+            <FormField
+              control={form.control}
+              name="indispensables"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-xs sm:text-sm" style={{ color: '#ffffff' }}>
+                    Indispensables para este Curso (Opcional)
+                  </FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Ej: Manejo de estados, API REST, CRUD, etc."
+                      rows={2}
+                      className="text-sm sm:text-base"
+                      style={{ 
+                        background: 'rgba(255, 255, 255, 0.1)', 
+                        borderColor: '#00A3E2',
+                        color: '#ffffff',
+                        resize: 'none'
+                      }}
+                      {...field}
+                    />
+                  </FormControl>
+                  <p className="text-xs" style={{ color: '#999999' }}>
+                    Lista las herramientas, frameworks o librerías que deben incluirse en el curso
+                  </p>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Campo Conocimientos Previos */}
+            <FormField
+              control={form.control}
+              name="conocimientosPrevios"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-xs sm:text-sm" style={{ color: '#ffffff' }}>
+                    Conocimientos Previos del Usuario (Opcional)
+                  </FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Ej: HTML básico, CSS intermedio, JavaScript básico, programación orientada a objetos, etc."
+                      rows={3}
+                      className="text-sm sm:text-base"
+                      style={{ 
+                        background: 'rgba(255, 255, 255, 0.1)', 
+                        borderColor: '#00A3E2',
+                        color: '#ffffff',
+                        resize: 'none'
+                      }}
+                      {...field}
+                    />
+                  </FormControl>
+                  <p className="text-xs" style={{ color: '#999999' }}>
+                    Describe tu nivel de experiencia y qué conocimientos ya tienes sobre este tema
+                  </p>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+                {/* Campo Tecnologías Fuera del Alcance */}
+                <FormField
+                  control={form.control}
+                  name="tecnologiasFueraAlcance"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs sm:text-sm" style={{ color: '#ffffff' }}>
+                        Tecnologías Fuera del Alcance para este Curso (Opcional)
+                      </FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Ej: Pruebas unitarias, typescript, etc."
+                          rows={2}
+                          className="text-sm sm:text-base"
+                          style={{ 
+                            background: 'rgba(255, 255, 255, 0.1)', 
+                            borderColor: '#00A3E2',
+                            color: '#ffffff',
+                            resize: 'none'
+                          }}
+                          {...field}
+                        />
+                      </FormControl>
+                      <p className="text-xs" style={{ color: '#999999' }}>
+                        Especifica tecnologías, herramientas o conceptos que NO deben incluirse en el curso
+                      </p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
+            )}
+
+            <DialogFooter className="gap-2 flex-col sm:flex-row">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCancel}
+                className="w-full sm:w-auto text-sm sm:text-base"
                 style={{ 
                   background: 'rgba(255, 255, 255, 0.1)', 
                   borderColor: '#00A3E2',
-                  color: dificultad ? '#ffffff' : '#999999'
+                  color: '#ffffff'
                 }}
               >
-                <SelectValue placeholder="Selecciona el nivel de dificultad" />
-              </SelectTrigger>
-              <SelectContent 
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                disabled={!form.watch('tecnologiaPrincipal') || !form.watch('dificultad') || !form.watch('razonCurso')}
+                className="w-full sm:w-auto text-sm sm:text-base"
                 style={{ 
-                  background: '#262422', 
-                  borderColor: '#00A3E2'
+                  background: form.watch('tecnologiaPrincipal') && form.watch('dificultad') && form.watch('razonCurso') ? '#00A3E2' : 'rgba(0, 163, 226, 0.5)', 
+                  color: '#ffffff',
+                  cursor: !form.watch('tecnologiaPrincipal') || !form.watch('dificultad') || !form.watch('razonCurso') ? 'not-allowed' : 'pointer'
                 }}
               >
-                <SelectItem 
-                  value="principiante"
-                  style={{ color: '#ffffff' }}
-                >
-                  Principiante
-                </SelectItem>
-                <SelectItem 
-                  value="intermedio"
-                  style={{ color: '#ffffff' }}
-                >
-                  Intermedio
-                </SelectItem>
-                <SelectItem 
-                  value="avanzado"
-                  style={{ color: '#ffffff' }}
-                >
-                  Avanzado
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Campo Conocimientos Previos */}
-          <div className="space-y-2">
-            <Label htmlFor="conocimientos" className="text-xs sm:text-sm" style={{ color: '#ffffff' }}>
-              Conocimientos Previos (Opcional)
-            </Label>
-            <Textarea
-              id="conocimientos"
-              placeholder="Ej: Tengo experiencia básica con HTML y CSS, pero no he trabajado con JavaScript antes"
-              value={conocimientosPrevios}
-              onChange={(e) => setConocimientosPrevios(e.target.value)}
-              rows={3}
-              className="text-sm sm:text-base"
-              style={{ 
-                background: 'rgba(255, 255, 255, 0.1)', 
-                borderColor: '#00A3E2',
-                color: '#ffffff',
-                resize: 'none'
-              }}
-            />
-            <p className="text-xs" style={{ color: '#999999' }}>
-              Describe tu nivel de experiencia y qué conocimientos ya tienes sobre este tema
-            </p>
-          </div>
-
-          <DialogFooter className="gap-2 flex-col sm:flex-row">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleCancel}
-              className="w-full sm:w-auto text-sm sm:text-base"
-              style={{ 
-                background: 'rgba(255, 255, 255, 0.1)', 
-                borderColor: '#00A3E2',
-                color: '#ffffff'
-              }}
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              disabled={!tema || !dificultad}
-              className="w-full sm:w-auto text-sm sm:text-base"
-              style={{ 
-                background: tema && dificultad ? '#00A3E2' : 'rgba(0, 163, 226, 0.5)', 
-                color: '#ffffff',
-                cursor: !tema || !dificultad ? 'not-allowed' : 'pointer'
-              }}
-            >
-              Crear Lección
-            </Button>
-          </DialogFooter>
-        </form>
+                Crear Lección
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
