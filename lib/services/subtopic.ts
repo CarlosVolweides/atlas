@@ -48,7 +48,6 @@ export const SubtopicService = {
             console.log("Error insertando subtemas:", error);
             throw error;
         }
-        console.log("Subtemas guardados correctamente:", data);
 
         return data;
     }

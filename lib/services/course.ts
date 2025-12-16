@@ -8,7 +8,7 @@ import { ApiServices } from "./api";
 import { SubtopicService } from "./subtopic";
 
 const supabase = createClient();
-const { data: { user } } = await supabase.auth.getUser();
+//const { data: { user } } = await supabase.auth.getUser();
 
 export const CourseService = {
 
@@ -64,7 +64,7 @@ export const CourseService = {
             throw new Error('Failed to create course');
         }
         const systemPromptData = await systemPromptCreatorResponse.json();
-
+        console.log("Info del systemPromptData: ", systemPromptData)
 
         /**
          * Call the planner
@@ -111,7 +111,7 @@ export const CourseService = {
                 systemPrompt: systemPromptData ?? "",
             };
 
-            return supabase.from("Courses")
+            return supabase.from("Cursos")
             .insert(coursePayload).select().single()
         }
 
