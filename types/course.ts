@@ -6,9 +6,10 @@ export interface Curso {
 }
 
 export interface Subtema {
-    titulo: string;
-    contenido: string;
-    completado: boolean;
+    order: number;
+    title: string;
+    description: string;    
+    completado?: string;
   }
   
 export interface CursoCardI {
@@ -26,3 +27,26 @@ export interface CreateCourseParams {
     priorKnowledge?: string[];
     outOfScope?: string[];
 }
+
+export interface PlannerModules {
+    order?: number;
+    title: string;    
+    objective?: string;
+}
+
+export interface Module {
+    order: number;
+    title: string;
+    objetive: string;
+    subtopics: Subtema[];
+}
+
+export interface ModuleDB {
+    id?: number
+    orden: number;
+    titulo: string;
+    curso_id?: number;
+    objetivo?: string;
+}
+
+// : tipado plannerData
