@@ -1,7 +1,7 @@
 import { cosineSimilarity } from "ai";
 import { createClient } from "../supabase/client";
 import { User } from "@supabase/supabase-js";
-import { CreateCourseParams, ModuleDB, PlannerModules } from "@/types/course";
+import { CreateCourseParams, CursoCardI, ModuleDB, PlannerModules } from "@/types/course";
 import { buildRoleText } from "../utils/roleText";
 import { buildFocus } from "../utils/focus";
 import { ApiServices } from "./api";
@@ -20,11 +20,18 @@ export const CourseService = {
      * @returns The data of the courses
      */
     async getCourses() {
-        
-        const { data, error } = await supabase.from('Cursos').select('*').filter('user_id', 'eq', user.id);
+        if (!user) {
+            throw new Error("Usuario no autenticado. No es posible obtener cursos");
+        }
+
+        const { data, error } = await supabase.from('vista_progreso_cursos')
+        .select('*')
+        .eq('user_id', user.id);
         if (error) {
             throw error;
         }
+        const dataCourses = data;
+        console.log(dataCourses)
         return data;
     },
 
