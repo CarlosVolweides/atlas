@@ -32,7 +32,7 @@ export const CourseService = {
         }
         const dataCourses = data
         dataCourses.forEach(course => {
-            course.progress = Math.floor(course.temas_completados/course.total_temas * 100);
+            course.progreso = Math.floor(course.temas_completados/course.total_temas * 100);
             return course
         });
         console.log(dataCourses)
