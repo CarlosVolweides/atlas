@@ -35,6 +35,15 @@ export const CourseService = {
      */
     async createCourse(course: CreateCourseParams) {
 
+        if (process.env.NODE_ENV === 'development') {
+            await new Promise(resolve => setTimeout(resolve, 10000));
+            return {
+                tecnologia: course.tecnologiaPrincipal,
+                dificultad: course.dificultad,
+                razonCurso: course.razonCurso,
+            };
+        }
+
         /**
          * Build the role text and focus
          */
