@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Card } from '@/components/ui/card';
 import { CrearCursoModal } from '@/components/CrearCursoModal';
+import { ChargeModal } from '@/components/ChargeModal';
 //import { EditarNombreLeccionModal } from '@/components/EditarNombreLeccionModal';
 //import { LeccionViewer } from '@/components/LeccionViewer';
 import { CursoCard } from '@/components/CursoCard';
@@ -16,6 +17,7 @@ import { useCourses, useCreateCourse } from '@/hooks/useCourse';
 export default function InicioScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isChargeModalOpen, setIsChargeModalOpen] = useState(false);
   const [cursos, setCursos] = useState<CursoCardI[]>(cursosInicialesEjemplo);
   const [editandoIndex, setEditandoIndex] = useState<number | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -23,7 +25,7 @@ export default function InicioScreen() {
   const router = useRouter();
   const { mutate: logout } = useLogout();
   const { data: cursosData } = useCourses();
-  const { mutate: createCourse } = useCreateCourse();
+  const createCourseMutation = useCreateCourse();
   const handleLogout = () => {
     logout();
     setTimeout(() => {
@@ -46,13 +48,21 @@ export default function InicioScreen() {
     tecnologiasFueraAlcance?: string | undefined;
     dificultad: string;
   }) => {
-    createCourse({
+    setIsChargeModalOpen(true);
+    createCourseMutation.mutate({
       tecnologiaPrincipal: datos.tecnologiaPrincipal,
       dificultad: datos.dificultad,
       razonCurso: datos.razonCurso,
       requiredTools: datos.indispensables?.split(','),
       priorKnowledge: datos.conocimientosPrevios?.split(','),
       outOfScope: datos.tecnologiasFueraAlcance?.split(','),
+    }, {
+      onSuccess: () => {
+        setIsChargeModalOpen(false);
+      },
+      onError: () => {
+        setIsChargeModalOpen(false);
+      },
     });
     console.log('Nuevo curso creado:', datos);
   };
@@ -203,6 +213,10 @@ export default function InicioScreen() {
         open={isModalOpen}
         onOpenChange={setIsModalOpen}
         onCrearCurso={handleCrearCurso}
+      />
+      <ChargeModal 
+        open={isChargeModalOpen}
+        onOpenChange={setIsChargeModalOpen}
       />
 {/*
       <EditarNofmbreCursoModal 
