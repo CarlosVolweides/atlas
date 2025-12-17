@@ -8,7 +8,10 @@ import { ApiServices } from "./api";
 import { SubtopicService } from "./subtopic";
 
 const supabase = createClient();
-//const { data: { user } } = await supabase.auth.getUser();
+const { data: { user } } = await supabase.auth.getUser();
+if (!user) {
+    throw new Error("Usuario no autenticado.");
+}
 
 export const CourseService = {
 
@@ -17,7 +20,8 @@ export const CourseService = {
      * @returns The data of the courses
      */
     async getCourses() {
-        const { data, error } = await supabase.from('Cursos').select('*');
+        
+        const { data, error } = await supabase.from('Cursos').select('*').filter('user_id', 'eq', user.id);
         if (error) {
             throw error;
         }
@@ -87,13 +91,6 @@ export const CourseService = {
         /**
          *  Create Course in Supabase
          */
-
-        const supabase = createClient();
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-            throw new Error("Usuario no autenticado.");
-        }
-
         const postCourse = async () =>{
 
             const coursePayload = {
