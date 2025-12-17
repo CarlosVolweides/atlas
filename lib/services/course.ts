@@ -21,7 +21,7 @@ export const CourseService = {
      */
     async getCourses() {
         if (!user) {
-            throw new Error("Usuario no autenticado. No es posible obtener cursos");
+            throw new Error("Usuario no autenticado. No es posible obtener");
         }
 
         const { data, error } = await supabase.from('vista_progreso_cursos')
@@ -30,7 +30,11 @@ export const CourseService = {
         if (error) {
             throw error;
         }
-        const dataCourses = data;
+        const dataCourses = data
+        dataCourses.forEach(course => {
+            course.progress = Math.floor(course.temas_completados/course.total_temas * 100);
+            return course
+        });
         console.log(dataCourses)
         return data;
     },
