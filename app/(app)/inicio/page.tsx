@@ -7,17 +7,20 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Card } from '@/components/ui/card';
 import { CrearCursoModal } from '@/components/CrearCursoModal';
 import { ChargeModal } from '@/components/ChargeModal';
-//import { EditarNombreLeccionModal } from '@/components/EditarNombreLeccionModal';
-//import { LeccionViewer } from '@/components/LeccionViewer';
 import { CursoCard } from '@/components/CursoCard';
 import { CursoCardI } from '@/types/course';
 import { cursosInicialesEjemplo } from './mocks';
 import { useLogout } from '@/hooks/useAccount';
 import { useCourses, useCreateCourse } from '@/hooks/useCourse';
+import { TemaryModal } from '@/components/TemaryModal';
+
+
 export default function InicioScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isChargeModalOpen, setIsChargeModalOpen] = useState(false);
+  const [isTemaryModalOpen, setIsTemaryModalOpen] = useState(false);
+  const [createdCourseId, setCreatedCourseId] = useState<number | null>(null);
   const [cursos, setCursos] = useState<CursoCardI[]>(cursosInicialesEjemplo);
   const [editandoIndex, setEditandoIndex] = useState<number | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -26,6 +29,7 @@ export default function InicioScreen() {
   const { mutate: logout } = useLogout();
   const { data: cursosData } = useCourses();
   const createCourseMutation = useCreateCourse();
+
   const handleLogout = () => {
     logout();
     setTimeout(() => {
@@ -57,11 +61,17 @@ export default function InicioScreen() {
       priorKnowledge: datos.conocimientosPrevios?.split(','),
       outOfScope: datos.tecnologiasFueraAlcance?.split(','),
     }, {
-      onSuccess: () => {
+      onSuccess: (data: any) => {
         setIsChargeModalOpen(false);
+        const courseId = data?.courseId || data?.id;
+        if (courseId) {
+          setCreatedCourseId(courseId);
+          setIsTemaryModalOpen(true);
+        }
       },
       onError: () => {
         setIsChargeModalOpen(false);
+        setCreatedCourseId(null);
       },
     });
     console.log('Nuevo curso creado:', datos);
@@ -217,6 +227,12 @@ export default function InicioScreen() {
       <ChargeModal 
         open={isChargeModalOpen}
         onOpenChange={setIsChargeModalOpen}
+      />
+
+      <TemaryModal 
+        open={isTemaryModalOpen}
+        onOpenChange={setIsTemaryModalOpen}
+        temaryid={createdCourseId || null}
       />
 {/*
       <EditarNofmbreCursoModal 

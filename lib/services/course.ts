@@ -47,8 +47,10 @@ export const CourseService = {
     async createCourse(course: CreateCourseParams) {
 
         if (process.env.NODE_ENV === 'development') {
-            await new Promise(resolve => setTimeout(resolve, 10000));
+            await new Promise(resolve => setTimeout(resolve, 1000));
             return {
+                id: 3,
+                courseId: 3,
                 tecnologia: course.tecnologiaPrincipal,
                 dificultad: course.dificultad,
                 razonCurso: course.razonCurso,
@@ -180,6 +182,18 @@ export const CourseService = {
         const createSubtopics = await SubtopicService.postSubtopics(plannerData.modules, modulesData)
         console.log("Info de subtemas registrados: ", createSubtopics)
         
-        return systemPromptData;
+        return {
+            id: courseId,
+            courseId: courseId,
+            ...courseData
+        };
+    },
+
+    async getTemaryByCourseId(courseId: number) {
+        const { data, error } = await supabase.from('Cursos').select('esquemaTemario').eq('id', courseId).single();
+        if (error) {
+            throw error;
+        }
+        return data?.esquemaTemario || null;
     }
 }

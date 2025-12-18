@@ -50,3 +50,20 @@ export interface ModuleDB {
 }
 
 // : tipado plannerData
+
+
+export interface SubtopicTemaryI {
+  order: number;
+  title: string;
+}
+
+export interface ModuleTemaryI {
+  order: number;
+  title: string;
+  subtopics: SubtopicTemaryI[];
+}
+
+export interface TemaryInterface {
+  outlineVersion: number;
+  modules: ModuleTemaryI[];
+}

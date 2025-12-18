@@ -3,6 +3,17 @@ import { CourseService } from "@/lib/services/course";
 import { CreateCourseParams } from "@/types/course";
 import { toast } from "sonner";
 
+export const useTemary = (courseId: number, options?: { enabled?: boolean }) => {
+    return useQuery({
+        queryKey: ['temary', courseId],
+        queryFn: async () => {
+            const data = await CourseService.getTemaryByCourseId(courseId);
+            return data;
+        },
+        enabled: options?.enabled !== false && courseId > 0
+    });
+}
+
 export const useCourses = () => {
     return useQuery({
         queryKey: ['courses'],
