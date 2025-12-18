@@ -108,7 +108,7 @@ export function CursoCard({ nombre, porcentaje, tecnologias, onEdit, onDelete }:
 
         {/* Tecnologías */}
         <div className="flex flex-wrap gap-2">
-          {tecnologias.map((tech, index) => (
+          {tecnologias?.map((tech, index) => (
             <Badge
               key={index}
               variant="outline"

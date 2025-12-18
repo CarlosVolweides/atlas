@@ -28,6 +28,7 @@ export default function InicioScreen() {
   const router = useRouter();
   const { mutate: logout } = useLogout();
   const { data: cursosData } = useCourses();
+  console.log("CursoData",cursosData)
   const createCourseMutation = useCreateCourse();
 
   const handleLogout = () => {
@@ -99,9 +100,9 @@ export default function InicioScreen() {
   };
 
   // Si hay un curso abierto, mostrar el visor de curso
-  if (cursoAbierto !== null && cursos[cursoAbierto]) {
+  if (cursoAbierto !== null) {
     return (
-      router.push(`/curso/${cursos[cursoAbierto].nombre}`)
+      router.push(`/curso/${cursoAbierto}`)
     );
   }
 
@@ -205,12 +206,12 @@ export default function InicioScreen() {
           
           {/* Grid de 3 columnas */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {cursos.map((curso, index) => (
-              <div key={index} onClick={() => setCursoAbierto(index)}>
-                <CursoCard
-                  nombre={curso.nombre}
-                  porcentaje={calcularPorcentaje(curso)}
-                  tecnologias={curso.tecnologias}
+            {cursosData?.map((curso, index) => (
+              <div key={index} onClick={() => setCursoAbierto(curso.id)}>
+                <CursoCard                  
+                  nombre={curso.tecnologia}
+                  porcentaje={curso.progreso}
+                  tecnologias={curso.herramientasRequeridas}
                   onEdit={() => handleEditarCurso(index)}
                   onDelete={() => handleEliminarCurso(index)}
                 />

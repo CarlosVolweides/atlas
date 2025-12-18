@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { CourseService } from "@/lib/services/course";
-import { CreateCourseParams } from "@/types/course";
+import { CreateCourseParams, CursoCardInfo } from "@/types/course";
 import { toast } from "sonner";
 
 export const useTemary = (courseId: number, options?: { enabled?: boolean }) => {
@@ -15,7 +15,8 @@ export const useTemary = (courseId: number, options?: { enabled?: boolean }) => 
 }
 
 export const useCourses = () => {
-    return useQuery({
+    
+    return useQuery<CursoCardInfo[]>({
         queryKey: ['courses'],
         queryFn: async () => { 
             const data = await CourseService.getCourses();

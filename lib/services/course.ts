@@ -35,8 +35,7 @@ export const CourseService = {
             course.progreso = Math.floor(course.temas_completados/course.total_temas * 100);
             return course
         });
-        console.log(dataCourses)
-        return data;
+        return dataCourses;
     },
 
     /**
