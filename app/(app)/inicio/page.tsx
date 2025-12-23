@@ -235,14 +235,7 @@ export default function InicioScreen() {
         onOpenChange={setIsTemaryModalOpen}
         temaryid={createdCourseId || null}
       />
-{/*
-      <EditarNofmbreCursoModal 
-        open={isEditModalOpen}
-        onOpenChange={setIsEditModalOpen}
-        nombreActual={editandoIndex !== null ? cursos[editandoIndex]?.nombre : ''}
-        onGuardar={handleGuardarNombre}
-      />
-      */}
+
     </div>
   );
 }
