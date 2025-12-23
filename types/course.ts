@@ -61,11 +61,13 @@ export interface ModuleDB {
 export interface SubtopicTemaryI {
   order: number;
   title: string;
+  description?: string;
 }
 
 export interface ModuleTemaryI {
   order: number;
   title: string;
+  objetive?: string;
   subtopics: SubtopicTemaryI[];
 }
 

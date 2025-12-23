@@ -1,5 +1,5 @@
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { BookOpen, Search, Settings, LogOut, Plus, User } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -99,12 +99,15 @@ export default function InicioScreen() {
     setCursos(cursosActualizados);
   };
 
-  // Si hay un curso abierto, mostrar el visor de curso
-  if (cursoAbierto !== null) {
-    return (
-      router.push(`/curso/${cursoAbierto}`)
-    );
-  }
+  // Navegar al curso cuando se selecciona uno
+  useEffect(() => {
+    if (cursoAbierto !== null && cursosData) {
+      const curso = cursosData[cursoAbierto];
+      if (curso) {
+        router.push(`/curso/${curso.id}`);
+      }
+    }
+  }, [cursoAbierto, cursosData, router]);
 
   return (
     <div 

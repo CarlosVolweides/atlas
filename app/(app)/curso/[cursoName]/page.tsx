@@ -13,90 +13,26 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { SubtopicTemaryI, ModuleTemaryI } from '@/types/course';
+import { useTemary } from '@/hooks/useCourse';
 
-import { TemaryInterface, SubtopicTemaryI } from '@/types/course';
 
 type EstadoSubtema = 'pendiente' | 'en-curso' | 'listo-para-prueba' | 'aprobado' | 'reprobado';
-
-// Mock de datos basado en la estructura de módulos y subtemas
-const mockTemary: TemaryInterface = {
-  outlineVersion: 1,
-  modules: [
-    {
-      order: 1,
-      title: "Introducción a PHP y Entornos de Desarrollo",
-      subtopics: [
-        { order: 1, title: "Historia de PHP" },
-        { order: 2, title: "Instalación de PHP y MySQL" },
-        { order: 3, title: "Configuración del Entorno de Desarrollo" },
-        { order: 4, title: "Estructura Básica de un Script PHP" }
-      ]
-    },
-    {
-      order: 2,
-      title: "Fundamentos de PHP",
-      subtopics: [
-        { order: 1, title: "Variables y Tipos de Datos" },
-        { order: 2, title: "Operadores en PHP" },
-        { order: 3, title: "Estructuras de Control" },
-        { order: 4, title: "Funciones en PHP" }
-      ]
-    },
-    {
-      order: 3,
-      title: "Manipulación de Datos con MySQL",
-      subtopics: [
-        { order: 1, title: "Introducción a MySQL" },
-        { order: 2, title: "Conexión a la Base de Datos" },
-        { order: 3, title: "Operaciones CRUD" },
-        { order: 4, title: "Consultas SQL" }
-      ]
-    },
-    {
-      order: 4,
-      title: "Desarrollo de Aplicaciones Web Dinámicas",
-      subtopics: [
-        { order: 1, title: "Formularios HTML" },
-        { order: 2, title: "Validación de Datos" },
-        { order: 3, title: "Manejo de Sesiones y Cookies" },
-        { order: 4, title: "Integración de PHP con HTML" }
-      ]
-    },
-    {
-      order: 5,
-      title: "Programación Orientada a Objetos en PHP",
-      subtopics: [
-        { order: 1, title: "Clases y Objetos" },
-        { order: 2, title: "Propiedades y Métodos" },
-        { order: 3, title: "Herencia y Polimorfismo" },
-        { order: 4, title: "Namespaces y Autoloading" }
-      ]
-    },
-    {
-      order: 6,
-      title: "Implementación de Proyectos Finales",
-      subtopics: [
-        { order: 1, title: "Planificación del Proyecto" },
-        { order: 2, title: "Desarrollo del Proyecto" },
-        { order: 3, title: "Pruebas y Depuración" },
-        { order: 4, title: "Presentación del Proyecto" }
-      ]
-    }
-  ]
-};
 
 const mockTecnologias = ['PHP', 'MySQL', 'HTML'];
 
 export default function LeccionViewer() {
   const router = useRouter();
   const params = useParams();
-  const nombreCurso = (params?.cursoName as string) || 'Curso de PHP';
+  const courseId = parseInt(params?.cursoName as string || '0');
+  const { data: temaryData } = useTemary(courseId, { enabled: courseId > 0 });
+  const nombreCurso = (params?.cursoName as string) || 'Curso';
   
   // Helper: Obtener todos los subtemas en un array plano
   const getAllSubtopics = () => {
     const allSubtopics: Array<{ moduleIndex: number; subtopicIndex: number; subtopic: SubtopicTemaryI }> = [];
-    mockTemary.modules.forEach((module, moduleIndex) => {
-      module.subtopics.forEach((subtopic, subtopicIndex) => {
+    temaryData?.modules.forEach((module: ModuleTemaryI, moduleIndex: number) => {
+      module.subtopics.forEach((subtopic: SubtopicTemaryI, subtopicIndex: number) => {
         allSubtopics.push({ moduleIndex, subtopicIndex, subtopic });
       });
     });
@@ -171,12 +107,13 @@ export default function LeccionViewer() {
       if (modoPrueba) return 'listo-para-prueba';
       if (modoTutoria || subtemaAprobado) return 'en-curso';
     }
-    return estadosSubtemas[index];
+    return estadosSubtemas[index] || 'pendiente';
   };
 
   // Función para obtener el icono y color según el estado
-  const obtenerIconoEstado = (estado: EstadoSubtema) => {
-    switch (estado) {
+  const obtenerIconoEstado = (estado: EstadoSubtema | undefined) => {
+    const estadoValido = estado || 'pendiente';
+    switch (estadoValido) {
       case 'pendiente':
         return { 
           icon: <Circle className="w-5 h-5 flex-shrink-0" style={{ color: '#666666' }} />,
@@ -206,6 +143,12 @@ export default function LeccionViewer() {
           icon: <XCircle className="w-5 h-5 flex-shrink-0" style={{ color: '#FF4444' }} />,
           color: '#FF4444',
           texto: 'Reprobado'
+        };
+      default:
+        return { 
+          icon: <Circle className="w-5 h-5 flex-shrink-0" style={{ color: '#666666' }} />,
+          color: '#666666',
+          texto: 'Pendiente'
         };
     }
   };
@@ -240,7 +183,7 @@ export default function LeccionViewer() {
     // Encontrar el índice global del subtema
     let globalIndex = 0;
     for (let i = 0; i < moduleIndex; i++) {
-      globalIndex += mockTemary.modules[i].subtopics.length;
+      globalIndex += temaryData?.modules[i]?.subtopics.length || 0;
     }
     globalIndex += subtopicIndex;
     handleCambiarSubtema(globalIndex);
@@ -458,12 +401,12 @@ export default function LeccionViewer() {
                 scrollbarWidth: 'thin',
                 scrollbarColor: '#00A3E2 rgba(255, 255, 255, 0.1)'
               }}>
-                {mockTemary.modules.map((module, moduleIndex) => {
+                {temaryData?.modules.map((module: ModuleTemaryI, moduleIndex: number) => {
                   const isExpanded = modulosExpandidos.has(moduleIndex);
                   // Calcular índice global inicial para este módulo
                   let globalIndexStart = 0;
                   for (let i = 0; i < moduleIndex; i++) {
-                    globalIndexStart += mockTemary.modules[i].subtopics.length;
+                    globalIndexStart += temaryData?.modules[i]?.subtopics.length || 0;
                   }
                   
                   return (
@@ -501,7 +444,7 @@ export default function LeccionViewer() {
                       {/* Subtemas del módulo */}
                       {isExpanded && (
                         <div className="ml-4 space-y-1 border-l-2 pl-2" style={{ borderColor: 'rgba(0, 163, 226, 0.3)' }}>
-                          {module.subtopics.map((subtopic, subtopicIndex) => {
+                          {module.subtopics.map((subtopic: SubtopicTemaryI, subtopicIndex: number) => {
                             const globalIndex = globalIndexStart + subtopicIndex;
                             const estado = obtenerEstadoSubtema(globalIndex);
                             const { icon } = obtenerIconoEstado(estado);

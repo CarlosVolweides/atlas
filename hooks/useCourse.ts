@@ -15,7 +15,6 @@ export const useTemary = (courseId: number, options?: { enabled?: boolean }) => 
 }
 
 export const useCourses = () => {
-    
     return useQuery<CursoCardInfo[]>({
         queryKey: ['courses'],
         queryFn: async () => { 
