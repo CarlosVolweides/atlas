@@ -102,10 +102,8 @@ export default function InicioScreen() {
   // Navegar al curso cuando se selecciona uno
   useEffect(() => {
     if (cursoAbierto !== null && cursosData) {
-      const curso = cursosData[cursoAbierto];
-      if (curso) {
-        router.push(`/curso/${curso.id}`);
-      }
+      // cursoAbierto contiene el ID del curso, no el índice
+      router.push(`/curso/${cursoAbierto}`);
     }
   }, [cursoAbierto, cursosData, router]);
 
