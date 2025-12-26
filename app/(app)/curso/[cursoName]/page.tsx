@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, use } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { 
   ArrowLeft, BookOpen, 
@@ -13,11 +13,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { SubtopicTemaryI, ModuleTemaryI } from '@/types/course';
+import { SubtopicTemaryI, ModuleTemaryI, EstadoSubtema } from '@/types/course';
 import { useTemary } from '@/hooks/useCourse';
-
-
-type EstadoSubtema = 'pendiente' | 'en-curso' | 'listo-para-prueba' | 'aprobado' | 'reprobado';
 
 const mockTecnologias = ['PHP', 'MySQL', 'HTML'];
 
@@ -59,6 +56,8 @@ export default function LeccionViewer() {
   const [tiempoSubtemaActual, setTiempoSubtemaActual] = useState(0); // Tiempo del subtema actual
   const tiempoInterval = useRef<NodeJS.Timeout | null>(null);
 
+  //Estado de generacion de subtemas
+  const [subtopicIsLoading, setsubtopicIsLoading ] = useState(false)
   // Iniciar el contador de tiempo para el subtema actual
   useEffect(() => {
     // Limpiar intervalo anterior si existe
@@ -102,22 +101,23 @@ export default function LeccionViewer() {
   }, 0);
 
   // Función para obtener el estado actual de un subtema
-  const obtenerEstadoSubtema = (index: number): EstadoSubtema => {
+  const obtenerEstadoSubtema = (index: number, stateIndex: EstadoSubtema): EstadoSubtema => {
     if (index === subtemaActual) {
       if (modoPrueba) return 'listo-para-prueba';
       if (modoTutoria || subtemaAprobado) return 'en-curso';
     }
-    return estadosSubtemas[index] || 'pendiente';
+    return stateIndex || estadosSubtemas[index] || 'pendiente';
   };
 
   // Función para obtener el icono y color según el estado
   const obtenerIconoEstado = (estado: EstadoSubtema | undefined) => {
     const estadoValido = estado || 'pendiente';
+    console.log(estadoValido)
     switch (estadoValido) {
       case 'pendiente':
         return { 
           icon: <Circle className="w-5 h-5 flex-shrink-0" style={{ color: '#666666' }} />,
-          color: '#666666',
+          color: '#666666ff',
           texto: 'Pendiente'
         };
       case 'en-curso':
@@ -144,10 +144,16 @@ export default function LeccionViewer() {
           color: '#FF4444',
           texto: 'Reprobado'
         };
+      case 'completado':
+        return { 
+          icon: <CheckCircle2 className="w-5 h-5 flex-shrink-0" style={{ color: '#00FF00' }} />,
+          color: '#00FF00',
+          texto: 'Completado'
+        };
       default:
         return { 
           icon: <Circle className="w-5 h-5 flex-shrink-0" style={{ color: '#666666' }} />,
-          color: '#666666',
+          color: '#666666ff',
           texto: 'Pendiente'
         };
     }
@@ -157,6 +163,10 @@ export default function LeccionViewer() {
     // Primero mostrar la prueba antes de marcar como completado
     setModoPrueba(true);
   };
+
+  const handleGenerarSubtema = () => {
+    setsubtopicIsLoading(true)
+  }
 
   const handleSiguiente = () => {
     if (subtemaActual < totalSubtopics - 1) {
@@ -446,10 +456,15 @@ export default function LeccionViewer() {
                         <div className="ml-4 space-y-1 border-l-2 pl-2" style={{ borderColor: 'rgba(0, 163, 226, 0.3)' }}>
                           {module.subtopics.map((subtopic: SubtopicTemaryI, subtopicIndex: number) => {
                             const globalIndex = globalIndexStart + subtopicIndex;
-                            const estado = obtenerEstadoSubtema(globalIndex);
+                            if(!subtopic.state){
+                                throw new Error("No existe estado en uno de los subtopic")
+                            }                            
+                            const estado = obtenerEstadoSubtema(globalIndex, subtopic.state);
                             const { icon } = obtenerIconoEstado(estado);
                             const isActive = subtemaActual === globalIndex;
-                            
+                            console.log("Estado de", subtopic.title,":",  estado)
+                            console.log("subtopic:", subtopic)
+                            console.log(subtopic.state)
                             return (
                               <button
                                 key={subtopicIndex}
@@ -478,8 +493,8 @@ export default function LeccionViewer() {
                 })}
 
               </div>
-              {/* Botón de Tutoría Guiada - Siempre disponible */}
-              {!modoTutoria && !modoPrueba && (
+              {/* Botón de Tutoría Guiada ( vv ELIMINAR false para activar boton*/}
+              {!modoTutoria && !modoPrueba && false && (
                 <div className="mt-4 pt-4 border-t flex-shrink-0" style={{ borderColor: 'rgba(0, 163, 226, 0.2)' }}>
                   <Button
                     onClick={() => setModoTutoria(true)}
@@ -545,10 +560,10 @@ export default function LeccionViewer() {
                 </div>
 
                 <div className="flex flex-col gap-3 md:gap-4 pt-4 md:pt-6 border-t" style={{ borderColor: 'rgba(0, 163, 226, 0.2)' }}>
-                  {/* Botón de prueba */}
+                  {/* Botón de generar subtema */}
                   {estadosSubtemas[subtemaActual] !== 'aprobado' && (
                     <Button
-                      onClick={handleMarcarCompletado}
+                      onClick={handleGenerarSubtema}
                       variant="outline"
                       className="w-full text-sm md:text-base"
                       style={{
@@ -558,8 +573,21 @@ export default function LeccionViewer() {
                       }}
                     >
                       <ClipboardList className="w-4 h-4 mr-2" />
-                      Realizar Prueba
+                      Generar subtema
                     </Button>
+                  )}
+
+                  {/* Contenido de subtema */}
+                  {subtopicIsLoading && (
+                    <p 
+                    className="w-full text-sm md:text-base"
+                    style={{
+                      color: '#ffffff',
+                      textAlign: 'center'
+                    }}>
+                      Generando Subtema...
+                    </p>
+                    
                   )}
 
                   {subtemaActual < totalSubtopics - 1 && (
