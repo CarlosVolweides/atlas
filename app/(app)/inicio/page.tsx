@@ -208,7 +208,7 @@ export default function InicioScreen() {
           {/* Grid de 3 columnas */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {cursosData?.map((curso, index) => (
-              <div key={index} onClick={() => setCursoAbierto(index)}>
+              <div key={index} onClick={() => setCursoAbierto(curso.id)}>
                 <CursoCard                  
                   nombre={curso.tecnologia}
                   porcentaje={curso.progreso}
