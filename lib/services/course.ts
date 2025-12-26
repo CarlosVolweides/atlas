@@ -6,6 +6,7 @@ import { buildRoleText } from "../utils/roleText";
 import { buildFocus } from "../utils/focus";
 import { ApiServices } from "./api";
 import { SubtopicService } from "./subtopic";
+import { buildSubtopicStateMap, enrichTemaryWithState } from "../utils/mapSubtopicsState";
 
 const supabase = createClient();
 const { data: { user } } = await supabase.auth.getUser();
@@ -189,10 +190,38 @@ export const CourseService = {
     },
 
     async getTemaryByCourseId(courseId: number) {
-        const { data, error } = await supabase.from('Cursos').select('esquemaTemario').eq('id', courseId).single();
+        const { data: temaryData, error } = await supabase.from('Cursos').select('esquemaTemario').eq('id', courseId).single();
         if (error) {
-            throw error;
+            throw new Error(`Error al obtener temario de Curso: ${error.message}`);;
         }
-        return data?.esquemaTemario || null;
+
+        const {data: statusSubtopics, error: SubtopicsError} = await supabase.from('Cursos')
+        .select(`
+        id,
+        Modulos (
+            Subtemas (
+            titulo,
+            estado,
+            id
+            )
+        )
+        `)
+        .eq('id', courseId)
+        .order('id', { foreignTable: 'Modulos.Subtemas', ascending: true })
+        .single();
+
+        if (SubtopicsError) {
+            throw new Error(`Error al obtener temario de Curso: ${SubtopicsError.message}`);;
+        }
+        console.log("statusSubtopics:", statusSubtopics)
+
+        const temary = temaryData?.esquemaTemario
+
+        const stateMap = buildSubtopicStateMap(statusSubtopics);
+        console.log("stateMap from getTemaryByCourseId: ",stateMap )
+        const temaryWithState = enrichTemaryWithState(temary, stateMap);
+
+        console.log("temaryWithState:", temaryWithState)
+        return temaryWithState || null;
     }
 }

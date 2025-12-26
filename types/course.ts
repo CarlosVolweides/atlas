@@ -56,12 +56,20 @@ export interface ModuleDB {
 }
 
 // : tipado plannerData
+export type EstadoSubtema = 
+  | 'pendiente' 
+  | 'en-curso' 
+  | 'listo-para-prueba' 
+  | 'aprobado' 
+  | 'reprobado' 
+  | 'completado';
 
 
 export interface SubtopicTemaryI {
   order: number;
   title: string;
   description?: string;
+  state?: EstadoSubtema;
 }
 
 export interface ModuleTemaryI {
