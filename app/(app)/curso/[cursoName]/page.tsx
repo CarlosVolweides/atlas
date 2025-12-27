@@ -112,15 +112,14 @@ export default function LeccionViewer() {
   // Función para obtener el icono y color según el estado
   const obtenerIconoEstado = (estado: EstadoSubtema | undefined) => {
     const estadoValido = estado || 'pendiente';
-    console.log(estadoValido)
     switch (estadoValido) {
-      case 'pendiente':
+      case 'vacio':
         return { 
           icon: <Circle className="w-5 h-5 flex-shrink-0" style={{ color: '#666666' }} />,
           color: '#666666ff',
           texto: 'Pendiente'
         };
-      case 'en-curso':
+      case 'pendiente':
         return { 
           icon: <Clock className="w-5 h-5 flex-shrink-0" style={{ color: '#FFA500' }} />,
           color: '#FFA500',
@@ -462,9 +461,7 @@ export default function LeccionViewer() {
                             const estado = obtenerEstadoSubtema(globalIndex, subtopic.state);
                             const { icon } = obtenerIconoEstado(estado);
                             const isActive = subtemaActual === globalIndex;
-                            console.log("Estado de", subtopic.title,":",  estado)
-                            console.log("subtopic:", subtopic)
-                            console.log(subtopic.state)
+                            
                             return (
                               <button
                                 key={subtopicIndex}
