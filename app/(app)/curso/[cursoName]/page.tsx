@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef, use } from 'react';
+import { useState, useEffect, useRef, use, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { 
   ArrowLeft, BookOpen, 
@@ -13,20 +13,12 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { SubtopicTemaryI, ModuleTemaryI, EstadoSubtema } from '@/types/course';
+import { SubtopicTemaryI, ModuleTemaryI, EstadoSubtema, TemaryInterface } from '@/types/course';
 import { useTemary } from '@/hooks/useCourse';
 
 const mockTecnologias = ['PHP', 'MySQL', 'HTML'];
 
-export default function LeccionViewer() {
-  const router = useRouter();
-  const params = useParams();
-  const courseId = parseInt(params?.cursoName as string || '0');
-  const { data: temaryData } = useTemary(courseId, { enabled: courseId > 0 });
-  const nombreCurso = (params?.cursoName as string) || 'Curso';
-  
-  // Helper: Obtener todos los subtemas en un array plano
-  const getAllSubtopics = () => {
+const getAllSubtopics = (temaryData: TemaryInterface) => {
     const allSubtopics: Array<{ moduleIndex: number; subtopicIndex: number; subtopic: SubtopicTemaryI }> = [];
     temaryData?.modules.forEach((module: ModuleTemaryI, moduleIndex: number) => {
       module.subtopics.forEach((subtopic: SubtopicTemaryI, subtopicIndex: number) => {
@@ -36,14 +28,30 @@ export default function LeccionViewer() {
     return allSubtopics;
   };
 
-  const allSubtopics = getAllSubtopics();
+export default function LeccionViewer() {
+  const router = useRouter();
+  const params = useParams();
+  const courseId = parseInt(params?.cursoName as string || '0');
+  const { data: temaryData } = useTemary(courseId, { enabled: courseId > 0 });
+  const nombreCurso = (params?.cursoName as string) || 'Curso';
+  
+  // Helper: Obtener todos los subtemas en un array plano
+  
+  console.log("allSubtopics", getAllSubtopics(temaryData))
+  const allSubtopics = useMemo(() => getAllSubtopics(temaryData), [temaryData]);
   const totalSubtopics = allSubtopics.length;
 
   // Estado: índice global del subtema actual
   const [subtemaActual, setSubtemaActual] = useState(0);
-  const [estadosSubtemas, setEstadosSubtemas] = useState<EstadoSubtema[]>(
-    new Array(totalSubtopics).fill('pendiente')
-  );
+  const [estadosSubtemas, setEstadosSubtemas] = useState<EstadoSubtema[]>([]);
+  useEffect(() => {
+  if (allSubtopics.length > 0 ) {
+    const iniciales = allSubtopics.map(item => item.subtopic.state as EstadoSubtema);
+    console.log("EstadosSubtemas modificados")
+    setEstadosSubtemas(iniciales);
+  }
+}, [allSubtopics]); 
+
   const [modulosExpandidos, setModulosExpandidos] = useState<Set<number>>(new Set([0])); // Primer módulo expandido por defecto
   const [modoTutoria, setModoTutoria] = useState(false);
   const [subtemaAprobado, setSubtemaAprobado] = useState(false);
@@ -99,6 +107,15 @@ export default function LeccionViewer() {
     }
     return total;
   }, 0);
+
+  // Función para actualizar un estado específico cuando el usuario interactúa
+  const actualizarEstado = (indexGlobal: number, nuevoEstado: EstadoSubtema) => {
+    setEstadosSubtemas(prev => {
+      const copia = [...prev];
+      copia[indexGlobal] = nuevoEstado;
+      return copia;
+    });
+  };
 
   // Función para obtener el estado actual de un subtema
   const obtenerEstadoSubtema = (index: number, stateIndex: EstadoSubtema): EstadoSubtema => {
@@ -173,6 +190,7 @@ export default function LeccionViewer() {
       setModoTutoria(false);
       setSubtemaAprobado(false);
       setModoPrueba(false);
+      setsubtopicIsLoading(false);
     }
   };
 
@@ -209,6 +227,7 @@ export default function LeccionViewer() {
     setModoTutoria(false);
     setSubtemaAprobado(false);
     setModoPrueba(false);
+    setsubtopicIsLoading(false);
     
     // Expandir el módulo que contiene este subtema
     const currentSubtopic = allSubtopics[index];
@@ -219,7 +238,7 @@ export default function LeccionViewer() {
 
 
   const porcentajeCompletado = Math.round(
-    (estadosSubtemas.filter(e => e === 'aprobado').length / totalSubtopics) * 100
+    (estadosSubtemas.filter(e => e === 'completado').length / totalSubtopics) * 100
   );
 
   return (
@@ -284,7 +303,7 @@ export default function LeccionViewer() {
                 <span className="text-xs" style={{ color: '#cccccc' }}>Subtemas</span>
               </div>
               <p className="text-lg" style={{ color: '#ffffff' }}>
-                {estadosSubtemas.filter(e => e === 'aprobado').length}/{totalSubtopics}
+                {estadosSubtemas.filter(e => e === 'completado').length}/{totalSubtopics}
               </p>
             </div>
 
@@ -366,7 +385,7 @@ export default function LeccionViewer() {
                   <span className="text-xs" style={{ color: '#cccccc' }}>Subtemas aprobados</span>
                 </div>
                 <p className="text-xl" style={{ color: '#ffffff' }}>
-                  {estadosSubtemas.filter(e => e === 'aprobado').length}/{totalSubtopics}
+                  {estadosSubtemas.filter(e => e === 'completado').length}/{totalSubtopics}
                 </p>
               </div>
             </div>
@@ -461,7 +480,7 @@ export default function LeccionViewer() {
                             const estado = obtenerEstadoSubtema(globalIndex, subtopic.state);
                             const { icon } = obtenerIconoEstado(estado);
                             const isActive = subtemaActual === globalIndex;
-                            
+                            console.log("estadosSubtemas",estadosSubtemas)
                             return (
                               <button
                                 key={subtopicIndex}
@@ -558,7 +577,8 @@ export default function LeccionViewer() {
 
                 <div className="flex flex-col gap-3 md:gap-4 pt-4 md:pt-6 border-t" style={{ borderColor: 'rgba(0, 163, 226, 0.2)' }}>
                   {/* Botón de generar subtema */}
-                  {estadosSubtemas[subtemaActual] !== 'aprobado' && (
+                  {estadosSubtemas[subtemaActual] == 'vacio' && (
+                    <div>                      
                     <Button
                       onClick={handleGenerarSubtema}
                       variant="outline"
@@ -572,36 +592,51 @@ export default function LeccionViewer() {
                       <ClipboardList className="w-4 h-4 mr-2" />
                       Generar subtema
                     </Button>
+
+                      {subtopicIsLoading && (
+                        <p 
+                        className="w-full text-sm md:text-base"
+                        style={{
+                          color: '#ffffff',
+                          textAlign: 'center'
+                        }}>
+                          Generando Subtema...
+                        </p>
+                        
+                      )}
+                    </div>
                   )}
 
-                  {/* Contenido de subtema */}
-                  {subtopicIsLoading && (
-                    <p 
-                    className="w-full text-sm md:text-base"
-                    style={{
-                      color: '#ffffff',
-                      textAlign: 'center'
-                    }}>
-                      Generando Subtema...
-                    </p>
-                    
-                  )}
+                  {estadosSubtemas[subtemaActual] !== 'vacio' && (
+                    <div className="flex flex-col gap-4">
 
-                  {subtemaActual < totalSubtopics - 1 && (
-                    <Button
-                      onClick={handleSiguiente}
-                      variant="outline"
-                      className="md:ml-auto md:w-auto w-full text-sm md:text-base"
+                      {/* Contenido de subtema */}
+                      <p className="w-full text-sm md:text-base"
                       style={{
-                        background: 'rgba(0, 163, 226, 0.1)',
-                        borderColor: '#00A3E2',
-                        color: '#ffffff'
-                      }}
-                    >
-                      Siguiente subtema
-                      <ChevronRight className="w-4 h-4 ml-2" />
-                    </Button>
+                        color: '#ffffff',
+                        textAlign: 'center'
+                      }}>
+                        Contenido de la BD
+                      </p>
+
+                      {subtemaActual < totalSubtopics - 1 && (
+                        <Button
+                        onClick={handleSiguiente}
+                        variant="outline"
+                        className="md:ml-auto md:w-auto w-full text-sm md:text-base"
+                        style={{
+                          background: 'rgba(0, 163, 226, 0.1)',
+                          borderColor: '#00A3E2',
+                          color: '#ffffff'
+                        }}
+                      >
+                        Siguiente subtema
+                        <ChevronRight className="w-4 h-4 ml-2" />
+                      </Button>
+                      )}
+                    </div>
                   )}
+
                 </div>
               </CardContent>
             </Card>
