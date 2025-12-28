@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef, use, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { 
   ArrowLeft, BookOpen, 
@@ -15,6 +15,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { SubtopicTemaryI, ModuleTemaryI, EstadoSubtema, TemaryInterface } from '@/types/course';
 import { useTemary } from '@/hooks/useCourse';
+import { obtainModuleIndexByGlobalIndex } from '@/lib/utils/resolve_index';
 
 const mockTecnologias = ['PHP', 'MySQL', 'HTML'];
 
@@ -44,15 +45,9 @@ export default function LeccionViewer() {
   // Estado: índice global del subtema actual
   const [subtemaActual, setSubtemaActual] = useState(0);
   const [estadosSubtemas, setEstadosSubtemas] = useState<EstadoSubtema[]>([]);
-  useEffect(() => {
-  if (allSubtopics.length > 0 ) {
-    const iniciales = allSubtopics.map(item => item.subtopic.state as EstadoSubtema);
-    console.log("EstadosSubtemas modificados")
-    setEstadosSubtemas(iniciales);
-  }
-}, [allSubtopics]); 
 
-  const [modulosExpandidos, setModulosExpandidos] = useState<Set<number>>(new Set([0])); // Primer módulo expandido por defecto
+
+  const [modulosExpandidos, setModulosExpandidos] = useState<Set<number>>(new Set([])); // Primer módulo expandido por defecto
   const [modoTutoria, setModoTutoria] = useState(false);
   const [subtemaAprobado, setSubtemaAprobado] = useState(false);
   const [modoPrueba, setModoPrueba] = useState(false);
@@ -236,6 +231,18 @@ export default function LeccionViewer() {
     }
   };
 
+  // Para iniciar estados provenientes del useTemary
+  useEffect(() => {
+  if (allSubtopics.length > 0 ) {
+    const iniciales = allSubtopics.map(item => item.subtopic.state as EstadoSubtema);
+    setEstadosSubtemas(iniciales);
+    const primerSubtemaPendiente = iniciales.findIndex(inicial => inicial !== 'completado')
+    console.log(primerSubtemaPendiente)
+    setSubtemaActual(primerSubtemaPendiente)
+    const indexModuloSubtema = obtainModuleIndexByGlobalIndex(temaryData, primerSubtemaPendiente)
+    toggleModulo(indexModuloSubtema)
+  }
+  }, [allSubtopics, temaryData]); 
 
   const porcentajeCompletado = Math.round(
     (estadosSubtemas.filter(e => e === 'completado').length / totalSubtopics) * 100
@@ -480,7 +487,7 @@ export default function LeccionViewer() {
                             const estado = obtenerEstadoSubtema(globalIndex, subtopic.state);
                             const { icon } = obtenerIconoEstado(estado);
                             const isActive = subtemaActual === globalIndex;
-                            console.log("estadosSubtemas",estadosSubtemas)
+                            
                             return (
                               <button
                                 key={subtopicIndex}
