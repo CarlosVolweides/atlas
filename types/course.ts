@@ -57,6 +57,7 @@ export interface ModuleDB {
 
 // : tipado plannerData
 export type EstadoSubtema = 
+  | 'vacio'
   | 'pendiente' 
   | 'en-curso' 
   | 'listo-para-prueba' 
