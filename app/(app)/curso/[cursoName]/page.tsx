@@ -16,6 +16,7 @@ import { Progress } from '@/components/ui/progress';
 import { SubtopicTemaryI, ModuleTemaryI, EstadoSubtema, TemaryInterface } from '@/types/course';
 import { useTemary } from '@/hooks/useCourse';
 import { obtainModuleIndexByGlobalIndex } from '@/lib/utils/resolve_index';
+import { toast } from "sonner";
 
 const mockTecnologias = ['PHP', 'MySQL', 'HTML'];
 
@@ -38,7 +39,6 @@ export default function LeccionViewer() {
   
   // Helper: Obtener todos los subtemas en un array plano
   
-  console.log("allSubtopics", getAllSubtopics(temaryData))
   const allSubtopics = useMemo(() => getAllSubtopics(temaryData), [temaryData]);
   const totalSubtopics = allSubtopics.length;
 
@@ -201,7 +201,11 @@ export default function LeccionViewer() {
     });
   };
 
-  const handleCambiarSubtemaPorIndices = (moduleIndex: number, subtopicIndex: number) => {
+  const handleCambiarSubtemaPorIndices = (moduleIndex: number, subtopicIndex: number, subtopicDisabled: boolean) => {
+    if(subtopicDisabled){
+      toast.warning("Subtema bloqueado, se requiere completar Subtemas o Modulos Anteriores")
+      return 0;
+    }    
     // Encontrar el índice global del subtema
     let globalIndex = 0;
     for (let i = 0; i < moduleIndex; i++) {
@@ -237,7 +241,7 @@ export default function LeccionViewer() {
     const iniciales = allSubtopics.map(item => item.subtopic.state as EstadoSubtema);
     setEstadosSubtemas(iniciales);
     const primerSubtemaPendiente = iniciales.findIndex(inicial => inicial !== 'completado')
-    console.log(primerSubtemaPendiente)
+    console.log("Indice de Subtema correspondiente a ver: ", primerSubtemaPendiente)
     setSubtemaActual(primerSubtemaPendiente)
     const indexModuloSubtema = obtainModuleIndexByGlobalIndex(temaryData, primerSubtemaPendiente)
     toggleModulo(indexModuloSubtema)
@@ -449,7 +453,7 @@ export default function LeccionViewer() {
                       {/* Header del módulo */}
                       <button
                         onClick={() => toggleModulo(moduleIndex)}
-                        className="w-full text-left p-2 md:p-3 rounded-lg transition-all flex items-center justify-between"
+                        className="w-full text-left p-2 md:p-3 rounded-lg transition-all flex items-center justify-between cursor-pointer"
                         style={{
                           background: 'rgba(0, 163, 226, 0.15)',
                           borderLeft: '3px solid #00A3E2'
@@ -487,11 +491,13 @@ export default function LeccionViewer() {
                             const estado = obtenerEstadoSubtema(globalIndex, subtopic.state);
                             const { icon } = obtenerIconoEstado(estado);
                             const isActive = subtemaActual === globalIndex;
+                            const isBlocked = globalIndex == 0 ? false : 
+                            globalIndex > 0 && (estadosSubtemas[globalIndex - 1] !== 'completado' && estado !== 'completado' ) 
                             
                             return (
                               <button
                                 key={subtopicIndex}
-                                onClick={() => handleCambiarSubtemaPorIndices(moduleIndex, subtopicIndex)}
+                                onClick={() => handleCambiarSubtemaPorIndices(moduleIndex, subtopicIndex, isBlocked)}                                
                                 className={`w-full text-left p-2 rounded-lg transition-all ${
                                   isActive ? 'ring-2 ring-cyan-400' : ''
                                 }`}
