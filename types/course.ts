@@ -84,3 +84,10 @@ export interface TemaryInterface {
   outlineVersion: number;
   modules: ModuleTemaryI[];
 }
+
+export interface ContextDB {
+  id?: number,
+  subtema_id: number,
+  content: string,
+  esDuda?: boolean
+}

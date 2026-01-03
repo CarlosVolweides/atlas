@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { CourseService } from "@/lib/services/course";
-import { CreateCourseParams, CursoCardInfo } from "@/types/course";
+import { ContextDB, CreateCourseParams, CursoCardInfo } from "@/types/course";
 import { toast } from "sonner";
+import { ContextService } from "@/lib/services/context";
 
 export const useTemary = (courseId: number, options?: { enabled?: boolean }) => {
     return useQuery({
@@ -38,5 +39,18 @@ export const useCreateCourse = () => {
         onError: (error: Error) => {
             toast.error((error as Error).message);
         },
+    });
+}
+
+export const useContextSubtopic= (courseId: number, moduleIndex: number | null, subtopicIndex: number | null) => {
+    return useQuery<ContextDB>({
+        queryKey: ['subtopic-context', courseId, moduleIndex, subtopicIndex],
+        queryFn: async () => {
+            const data = await ContextService.getContextBySubtopic(courseId, (moduleIndex!), (subtopicIndex!))
+            console.log("Data from hook useContextSubtopic", data)
+            return data;
+        },
+        enabled: !!courseId && moduleIndex !== null && subtopicIndex !== null,
+        
     });
 }
