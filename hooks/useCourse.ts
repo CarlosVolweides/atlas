@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { CourseService } from "@/lib/services/course";
-import { ContextDB, CreateCourseParams, CursoCardInfo } from "@/types/course";
+import { ContextDB, CreateCourseParams, CursoCardInfo, EstadoSubtema } from "@/types/course";
 import { toast } from "sonner";
 import { ContextService } from "@/lib/services/context";
+import { SubtopicService } from "@/lib/services/subtopic";
 
 export const useTemary = (courseId: number, options?: { enabled?: boolean }) => {
     return useQuery({
@@ -42,15 +43,31 @@ export const useCreateCourse = () => {
     });
 }
 
-export const useContextSubtopic= (courseId: number, moduleIndex: number | null, subtopicIndex: number | null) => {
+export const useContextSubtopic= (courseId: number, moduleIndex: number | null, subtopicIndex: number | null, isEnabled: boolean) => {
     return useQuery<ContextDB>({
         queryKey: ['subtopic-context', courseId, moduleIndex, subtopicIndex],
         queryFn: async () => {
-            const data = await ContextService.getContextBySubtopic(courseId, (moduleIndex!), (subtopicIndex!))
-            console.log("Data from hook useContextSubtopic", data)
+            const data = await ContextService.getContextBySubtopic(courseId, (moduleIndex!), (subtopicIndex!))            
             return data;
         },
-        enabled: !!courseId && moduleIndex !== null && subtopicIndex !== null,
+        enabled: !!courseId && moduleIndex !== null && subtopicIndex !== null && isEnabled,
         
     });
+}
+
+export const useUpdateSubtemaEstado = () => {
+  return useMutation({
+    mutationFn: async ({
+        courseId,
+        moduleOrder,
+        subtopicOrder,
+        newState
+    }: {
+        courseId: number
+        moduleOrder: number
+        subtopicOrder: number
+        newState: EstadoSubtema
+    }) =>
+      SubtopicService.updateSubtopicState(courseId, moduleOrder, subtopicOrder, newState)
+  })
 }

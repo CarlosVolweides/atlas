@@ -1,6 +1,6 @@
 import { number } from "zod";
 import { createClient } from "../supabase/client";
-import {Subtema, Module, ModuleDB} from "@/types/course";
+import {Subtema, Module, ModuleDB, EstadoSubtema} from "@/types/course";
 
 const supabase = createClient();
 const { data: { user } } = await supabase.auth.getUser();
@@ -50,6 +50,21 @@ export const SubtopicService = {
         }
 
         return data;
+    },
+
+    async updateSubtopicState(courseId: number, moduleOrder: number, subtopicOrder: number, nuevoEstado: EstadoSubtema){
+        const {data, error } = await supabase.rpc('actualizar_estado_subtema', {
+            p_curso_id: courseId,
+            p_orden_modulo: moduleOrder,
+            p_orden_subtema: subtopicOrder,
+            p_nuevo_estado: nuevoEstado
+        })
+
+        if (error) {
+            throw error
+        }
+        
+        return data
     }
 
 }

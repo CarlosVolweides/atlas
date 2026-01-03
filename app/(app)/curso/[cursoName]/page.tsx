@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { SubtopicTemaryI, ModuleTemaryI, EstadoSubtema, TemaryInterface } from '@/types/course';
-import { useTemary, useContextSubtopic } from '@/hooks/useCourse';
+import { useTemary, useContextSubtopic, useUpdateSubtemaEstado } from '@/hooks/useCourse';
 import { obtainModuleIndexByGlobalIndex } from '@/lib/utils/resolve_index';
 import { toast } from "sonner";
 
@@ -71,7 +71,7 @@ export default function LeccionViewer() {
   const [estadosSubtemas, setEstadosSubtemas] = useState<EstadoSubtema[]>([]);
 
   const ordenActivo = useMemo(() => {
-  if (subtemaActual === null) return null
+  if (subtemaActual === null || !flatSubtopics[subtemaActual]) return null
   return flatSubtopics[subtemaActual]
     ? {
         mod: flatSubtopics[subtemaActual].moduleOrder,
@@ -80,6 +80,7 @@ export default function LeccionViewer() {
     : null
 }, [subtemaActual, flatSubtopics])
 
+  const { mutateAsync: persistEstado } = useUpdateSubtemaEstado()
 
   const [modulosExpandidos, setModulosExpandidos] = useState<Set<number>>(new Set([])); // Primer módulo expandido por defecto
   const [modoTutoria, setModoTutoria] = useState(false);
@@ -95,6 +96,8 @@ export default function LeccionViewer() {
 
   //Estado de generacion de subtemas
   const [subtopicIsLoading, setsubtopicIsLoading ] = useState(false)
+  //Estado de actualizacion de subtema
+  const [isAdvancing, setIsAdvancing] = useState(false)
   // Iniciar el contador de tiempo para el subtema actual
   useEffect(() => {
     // Limpiar intervalo anterior si existe
@@ -114,6 +117,13 @@ export default function LeccionViewer() {
     };
   }, [subtemaActual]); // Reiniciar cuando cambia de subtema
 
+  const tieneContenido = useMemo(() => {
+    const estadoActual = estadosSubtemas[subtemaActual];
+
+    if (!estadoActual) return false;
+    return estadoActual !== 'vacio';
+  }, [estadosSubtemas, subtemaActual]);
+
   const {
     data: contextSubtopic,
     isLoading,
@@ -121,8 +131,10 @@ export default function LeccionViewer() {
   } = useContextSubtopic(
     courseId,
     ordenActivo?.mod ?? null,
-    ordenActivo?.sub ?? null
+    ordenActivo?.sub ?? null,
+    tieneContenido // <--- Hara la consulta solo si no es 'vacio'
   )
+
   // Función para formatear el tiempo
   const formatearTiempo = (segundos: number): string => {
     const horas = Math.floor(segundos / 3600);
@@ -214,23 +226,66 @@ export default function LeccionViewer() {
     }
   };
 
-  const handleMarcarCompletado = () => {
+  const handleMarcarCompletado = () => {//Viejo handle diseñado para pruebas
     // Primero mostrar la prueba antes de marcar como completado
     setModoPrueba(true);
   };
+  
+  const marcarSubtemaCompletado = async () => {
+    if (subtemaActual === null) return
+
+    const indexObjetivo = subtemaActual
+    const sub = flatSubtopics[indexObjetivo]
+
+    setEstadosSubtemas(prev => {
+      const copy = [...prev]
+      copy[indexObjetivo] = 'completado'
+      return copy
+    })
+
+    try {
+      // Persistir en BD
+      await persistEstado({
+        courseId: courseId,
+        moduleOrder: sub.moduleOrder,
+        subtopicOrder: sub.subtopicOrder,
+        newState: 'completado'
+      })
+    } catch (error) {
+      // Rollback
+      setEstadosSubtemas(prev => {
+        const copy = [...prev]
+        copy[indexObjetivo] = sub.state
+        return copy
+      })
+      toast.error('No se pudo guardar el subtema como completado')
+      throw error
+  }
+}
 
   const handleGenerarSubtema = () => {
     setsubtopicIsLoading(true)
   }
 
-  const handleSiguiente = () => {
+  const handleSiguiente = async () => {
+    if (isAdvancing) return
     if (subtemaActual < totalSubtopics - 1) {
-      setSubtemaActual(subtemaActual + 1);
-      setModoTutoria(false);
-      setSubtemaAprobado(false);
-      setModoPrueba(false);
-      setsubtopicIsLoading(false);
-    }
+      setIsAdvancing(true)
+      
+      try {
+        await marcarSubtemaCompletado()
+        setSubtemaActual(subtemaActual + 1);
+        setModoTutoria(false);
+        setSubtemaAprobado(false);
+        setModoPrueba(false);
+        setsubtopicIsLoading(false);
+      } catch {
+        toast.error('No se pudo guardar el progreso')
+      } finally {
+        setIsAdvancing(false)
+      }
+
+    } 
   };
 
   const toggleModulo = (moduleIndex: number) => {
@@ -272,9 +327,11 @@ export default function LeccionViewer() {
     
   }
 
-  // Para iniciar estados provenientes del useTemary
+  // Para iniciar estados provenientes del flatSubtopics (temaryData)
+  const initializedRef = useRef(false)
+
   useEffect(() => {
-  if (!flatSubtopics.length) return
+  if (!flatSubtopics.length || initializedRef.current) return
 
   const iniciales: EstadoSubtema[] = flatSubtopics.map(
     sub => sub.state
@@ -286,6 +343,8 @@ export default function LeccionViewer() {
     iniciales.findIndex(e => e !== 'completado')
 
   setSubtemaActual(primerPendiente !== -1 ? primerPendiente : 0)
+
+  initializedRef.current = true
 }, [flatSubtopics])
 
 
@@ -694,6 +753,7 @@ export default function LeccionViewer() {
                       {subtemaActual < totalSubtopics - 1 && (
                         <Button
                         onClick={handleSiguiente}
+                        disabled={isAdvancing}
                         variant="outline"
                         className="md:ml-auto md:w-auto w-full text-sm md:text-base"
                         style={{
@@ -702,7 +762,7 @@ export default function LeccionViewer() {
                           color: '#ffffff'
                         }}
                       >
-                        Siguiente subtema
+                        {isAdvancing ? 'Guardando...' : 'Siguiente subtema'}
                         <ChevronRight className="w-4 h-4 ml-2" />
                       </Button>
                       )}

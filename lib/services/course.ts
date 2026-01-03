@@ -33,7 +33,7 @@ export const CourseService = {
         }
         const dataCourses = data
         dataCourses.forEach(course => {
-            course.progreso = Math.floor(course.temas_completados/course.total_temas * 100);
+            course.progreso = Math.round(course.temas_completados/course.total_temas * 100);
             return course
         });
         return dataCourses;
@@ -213,12 +213,11 @@ export const CourseService = {
         if (SubtopicsError) {
             throw new Error(`Error al obtener temario de Curso: ${SubtopicsError.message}`);;
         }
-        console.log("statusSubtopics:", statusSubtopics)
-
+        
         const temary = temaryData?.esquemaTemario
 
         const stateMap = buildSubtopicStateMap(statusSubtopics);
-        console.log("stateMap from getTemaryByCourseId: ",stateMap )
+        
         const temaryWithState = enrichTemaryWithState(temary, stateMap);
 
         console.log("temaryWithState:", temaryWithState)

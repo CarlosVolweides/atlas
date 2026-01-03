@@ -8,7 +8,7 @@ export const ContextService = {
     async getContextBySubtopic(courseId: number, moduleOrder: number, subtopicOrder: number) {
 
         const { data, error } = await supabase
-            .from('Contexto') // Empezamos desde la tabla que queremos obtener
+            .from('Contexto') 
             .select(`
             *,
             Subtemas!inner(
@@ -22,7 +22,7 @@ export const ContextService = {
             .eq('Subtemas.orden', subtopicOrder)
             .eq('Subtemas.Modulos.orden', moduleOrder)
             .eq('Subtemas.Modulos.curso_id', courseId)
-            .single(); // Solo queremos un registro
+            .single(); // un registro
 
         if (error) {
             console.error("Error obteniendo el contexto:", error);
