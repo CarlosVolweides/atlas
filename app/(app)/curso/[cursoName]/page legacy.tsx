@@ -24,8 +24,7 @@ type FlatSubtopic = {
   globalIndex: number
   moduleOrder: number
   subtopicOrder: number
-  title: string,
-  state: EstadoSubtema
+  title: string
 }
 
 const getAllSubtopics = (temaryData: TemaryInterface) => {
@@ -47,7 +46,8 @@ export default function LeccionViewer() {
   
   // Helper: Obtener todos los subtemas en un array plano
   
-  /*const allSubtopics = useMemo(() => getAllSubtopics(temaryData), [temaryData]);*/
+  const allSubtopics = useMemo(() => getAllSubtopics(temaryData), [temaryData]);
+  const totalSubtopics = allSubtopics.length;
 
   const flatSubtopics = useMemo<FlatSubtopic[]>(() => {
   if (!temaryData) return []
@@ -59,12 +59,10 @@ export default function LeccionViewer() {
       globalIndex: index++,
       moduleOrder: module.order,
       subtopicOrder: sub.order,
-      title: sub.title,
-      state: sub.state ?? 'pendiente'
+      title: sub.title
     }))
   )
 }, [temaryData])
-  const totalSubtopics = flatSubtopics.length;
 
   // Estado: índice global del subtema actual
   const [subtemaActual, setSubtemaActual] = useState(0);
@@ -156,13 +154,12 @@ export default function LeccionViewer() {
   };
 
   // Función para obtener el estado actual de un subtema
-  const obtenerEstadoSubtema = (index: number): EstadoSubtema => {
-    const estadoBase = estadosSubtemas[index] ?? 'pendiente';
+  const obtenerEstadoSubtema = (index: number, stateIndex: EstadoSubtema): EstadoSubtema => {
     if (index === subtemaActual) {
       if (modoPrueba) return 'listo-para-prueba';
       if (modoTutoria || subtemaAprobado) return 'en-curso';
     }
-    return estadoBase || 'pendiente';
+    return stateIndex || estadosSubtemas[index] || 'pendiente';
   };
 
   // Función para obtener el icono y color según el estado
@@ -245,11 +242,24 @@ export default function LeccionViewer() {
     });
   };
 
-  
+  const handleCambiarSubtemaPorIndices = (moduleIndex: number, subtopicIndex: number, subtopicDisabled: boolean) => {
+    if(subtopicDisabled){
+      toast.warning("Subtema bloqueado, se requiere completar Subtemas o Modulos Anteriores")
+      return 0;
+    }    
+    // Encontrar el índice global del subtema
+    let globalIndex = 0;
+    for (let i = 0; i < moduleIndex; i++) {
+      globalIndex += temaryData?.modules[i]?.subtopics.length || 0;
+    }
+    globalIndex += subtopicIndex;
+    handleCambiarSubtema(globalIndex);  
+  };
+
   const handleVolver = () => {
     router.push('/inicio');
   };
-/*
+
   const handleCambiarSubtema = (index: number) => {
     setSubtemaActual(index);
     // Resetear el contador de tiempo para el nuevo subtema
@@ -264,40 +274,24 @@ export default function LeccionViewer() {
     if (currentSubtopic) {
       setModulosExpandidos(prev => new Set([...prev, currentSubtopic.moduleIndex]));
     }
-  };*/
+  };
 
   // Para iniciar estados provenientes del useTemary
   useEffect(() => {
-  if (!flatSubtopics.length) return
+  if (allSubtopics.length > 0 ) {
+    const iniciales = allSubtopics.map(item => item.subtopic.state as EstadoSubtema);
+    setEstadosSubtemas(iniciales);
 
-  const iniciales: EstadoSubtema[] = flatSubtopics.map(
-    sub => sub.state
-  )
+    const primerSubtemaPendiente = iniciales.findIndex(inicial => inicial !== 'completado')
+    const indexInicial =
+    primerSubtemaPendiente !== -1 ? primerSubtemaPendiente : 0
+    console.log("Indice de Subtema correspondiente a ver: ", indexInicial)
+    setSubtemaActual(indexInicial)
 
-  setEstadosSubtemas(iniciales)
-
-  const primerPendiente =
-    iniciales.findIndex(e => e !== 'completado')
-
-  setSubtemaActual(primerPendiente !== -1 ? primerPendiente : 0)
-}, [flatSubtopics])
-
-
-  useEffect(() => {
-  if (subtemaActual === null) return
-
-  const sub = flatSubtopics[subtemaActual]
-  if (!sub) return
-
-  const moduleIndex = temaryData.modules.findIndex(
-    m => m.order === sub.moduleOrder
-  )
-
-  if (moduleIndex !== -1) {
-    setModulosExpandidos(prev => new Set([...prev, moduleIndex]))
+    const indexModuloSubtema = obtainModuleIndexByGlobalIndex(temaryData, indexInicial)
+    toggleModulo(indexModuloSubtema)
   }
-}, [subtemaActual, flatSubtopics, temaryData])
-
+  }, [allSubtopics, temaryData]); 
 
   const porcentajeCompletado = Math.round(
     (estadosSubtemas.filter(e => e === 'completado').length / totalSubtopics) * 100
@@ -493,9 +487,11 @@ export default function LeccionViewer() {
               }}>
                 {temaryData?.modules.map((module: ModuleTemaryI, moduleIndex: number) => {
                   const isExpanded = modulosExpandidos.has(moduleIndex);
-                  const subtopicsDelModulo = flatSubtopics.filter(
-                      s => s.moduleOrder === module.order
-                    )
+                  // Calcular índice global inicial para este módulo
+                  let globalIndexStart = 0;
+                  for (let i = 0; i < moduleIndex; i++) {
+                    globalIndexStart += temaryData?.modules[i]?.subtopics.length || 0;
+                  }
                   
                   return (
                     <div key={moduleIndex} className="space-y-1">
@@ -532,19 +528,21 @@ export default function LeccionViewer() {
                       {/* Subtemas del módulo */}
                       {isExpanded && (
                         <div className="ml-4 space-y-1 border-l-2 pl-2" style={{ borderColor: 'rgba(0, 163, 226, 0.3)' }}>
-                          {subtopicsDelModulo.map(sub => {
-                            const globalIndex = sub.globalIndex
-                            const estado = obtenerEstadoSubtema(globalIndex)
+                          {module.subtopics.map((subtopic: SubtopicTemaryI, subtopicIndex: number) => {
+                            const globalIndex = globalIndexStart + subtopicIndex;
+                            if(!subtopic.state){
+                                throw new Error("No existe estado en uno de los subtopic")
+                            }                            
+                            const estado = obtenerEstadoSubtema(globalIndex, subtopic.state);
                             const { icon } = obtenerIconoEstado(estado);
                             const isActive = subtemaActual === globalIndex;
-                            const isBlocked =
-                              globalIndex > 0 &&
-                              estadosSubtemas[globalIndex - 1] !== 'completado'
+                            const isBlocked = globalIndex == 0 ? false : 
+                            globalIndex > 0 && (estadosSubtemas[globalIndex - 1] !== 'completado' && estado !== 'completado' ) 
                             
                             return (
                               <button
-                                key={globalIndex}
-                                onClick={() => !isBlocked && setSubtemaActual(globalIndex)}                                
+                                key={subtopicIndex}
+                                onClick={() => handleCambiarSubtemaPorIndices(moduleIndex, subtopicIndex, isBlocked)}                                
                                 className={`w-full text-left p-2 rounded-lg transition-all ${
                                   isActive ? 'ring-2 ring-cyan-400' : ''
                                 }`}
@@ -557,7 +555,7 @@ export default function LeccionViewer() {
                               >
                                 <div className="flex items-center gap-2">
                                   {icon}
-                                  <span className="text-xs truncate">{sub.title}</span>
+                                  <span className="text-xs truncate">{subtopic.title}</span>
                                 </div>
                               </button>
                             );
@@ -609,7 +607,7 @@ export default function LeccionViewer() {
                 <div className="mb-4 md:mb-6">
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-0 mb-3 md:mb-4">
                     <h2 className="text-xl md:text-2xl" style={{ color: '#ffffff' }}>
-                      {flatSubtopics[subtemaActual]?.title || 'Subtema'}
+                      {allSubtopics[subtemaActual]?.subtopic.title || 'Subtema'}
                     </h2>
                     {estadosSubtemas[subtemaActual] === 'aprobado' && (
                       <div className="flex items-center gap-2 px-3 py-1 rounded-full self-start" style={{ background: 'rgba(0, 163, 226, 0.2)' }}>
@@ -628,8 +626,8 @@ export default function LeccionViewer() {
                   style={{ color: '#ffffff', lineHeight: '1.8' }}
                 >
                   <p className="mb-3 md:mb-4 text-sm md:text-base">
-                    {flatSubtopics[subtemaActual]?.title ? 
-                      `Contenido del subtema: ${flatSubtopics[subtemaActual].title}. Este es un placeholder para el contenido real que se cargará desde la base de datos.` :
+                    {allSubtopics[subtemaActual]?.subtopic.title ? 
+                      `Contenido del subtema: ${allSubtopics[subtemaActual].subtopic.title}. Este es un placeholder para el contenido real que se cargará desde la base de datos.` :
                       'Cargando contenido...'
                     }
                   </p>
@@ -707,7 +705,7 @@ export default function LeccionViewer() {
             <div className="h-full flex flex-col">
               <div className="mb-3 md:mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-0">
                 <h2 className="text-xl md:text-2xl" style={{ color: '#ffffff' }}>
-                  {flatSubtopics[subtemaActual]?.title || 'Subtema'}
+                  {allSubtopics[subtemaActual]?.subtopic.title || 'Subtema'}
                 </h2>
                 <Button
                   onClick={() => setModoTutoria(false)}
