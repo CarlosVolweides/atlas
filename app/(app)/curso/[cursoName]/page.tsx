@@ -265,6 +265,12 @@ export default function LeccionViewer() {
       setModulosExpandidos(prev => new Set([...prev, currentSubtopic.moduleIndex]));
     }
   };*/
+  const handleCambiarSubtema = (index: number) => {
+    setSubtemaActual(index);
+    
+    setsubtopicIsLoading(false);
+    
+  }
 
   // Para iniciar estados provenientes del useTemary
   useEffect(() => {
@@ -544,7 +550,11 @@ export default function LeccionViewer() {
                             return (
                               <button
                                 key={globalIndex}
-                                onClick={() => !isBlocked && setSubtemaActual(globalIndex)}                                
+                                onClick={() => 
+                                  isBlocked 
+                                  ? toast.warning("Subtema bloqueado, se requiere completar Subtemas o Modulos anteriores")
+                                  : handleCambiarSubtema(globalIndex)
+                                }                                
                                 className={`w-full text-left p-2 rounded-lg transition-all ${
                                   isActive ? 'ring-2 ring-cyan-400' : ''
                                 }`}

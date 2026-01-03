@@ -31,7 +31,9 @@ export default function RootLayout({
       >
         <QueryProvider>
           {children}
-          <Toaster />
+          <Toaster 
+          closeButton={true}
+          />
         </QueryProvider>
       </body>
     </html>
