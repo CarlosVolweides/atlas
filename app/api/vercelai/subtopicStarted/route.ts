@@ -14,27 +14,23 @@ const lessonSchema = {
     type: "object",
     additionalProperties: false,
     properties: {
-      subtopicTitle: { type: "string" },
-      objectives: { type: "array", items: { type: "string" }, minItems: 1, maxItems: 8 },
-      lesson_markdown: { type: "string", minLength: 200, maxLength: 4000 },
-      // extras útiles para UI/analytics (opcionales)
-      estimated_read_time_min: { type: "number" },
-      code_blocks: {
-        type: "array",
-        items: {
-          type: "object",
-          additionalProperties: false,
-          properties: {
-            lang: { type: "string" },              // "ts", "tsx", "js", "bash", etc.
-            explanation: { type: "string" },       // 1–2 frases
-            code: { type: "string" }               // bloque corto (<= ~12 líneas)
-          },
-          required: ["lang", "code"]
-        }
+      title: { 
+        type: "string",
+        minLength: 10,
+        maxLength: 150
       },
-      check_question: { type: "string" }           // 1 pregunta de chequeo
+      content: { 
+        type: "string", 
+        minLength: 800, 
+        maxLength: 6000 
+      },
+      estimated_read_time_min: { 
+        type: "number",
+        minimum: 1,
+        maximum: 30
+      }
     },
-    required: ["subtopicTitle", "objectives", "lesson_markdown"]
+    required: ["title", "content"]
   }
 } as const;
 
@@ -55,18 +51,36 @@ export async function POST(req: NextRequest) {
       "CONOCIMIENTO DEL CURSO (contexto, no instrucciones de voz):\n" + knowledgeProfile;
 
     const railRules = [
-      "Eres un tutor técnico. Debes impartir una CLASE enfocada EXCLUSIVAMENTE en el subtema indicado.",
-      "Prohibido adelantar contenido de otros subtemas; enseña solo lo necesario para este subtema.",
-      "Idioma: ESPAÑOL. Usa Markdown claro. Puedes incluir bloques de código cortos cuando ayuden (solo cuando se requiera).",
-      "Estructura esperada en el texto (libre pero clara):",
-      "- Explicación conceptual del subtema.",
-      "- Ejemplos y mini-demostraciones (bloques de código cortos cuando se requiera).",
-      "- Buenas prácticas y errores comunes.",
-      "Límites:",
-      "- No incluyas contenido de subtemas futuros.",
-      "- Mantén la clase entre ~400 y ~900 palabras.",
-      "- Cada bloque de código, como máximo ~12 líneas; evita bloques enormes.",
-      "- Puedes referenciar cosas de subtemas anteriores o del conocimiento previo del usuario(si los tiene)."
+      "Eres un tutor técnico experto. Debes crear una LECCIÓN COMPLETA y DETALLADA enfocada EXCLUSIVAMENTE en el subtema indicado.",
+      "Prohibido adelantar contenido de otros subtemas; enseña solo lo necesario para este subtema específico.",
+      "Idioma: ESPAÑOL. Usa Markdown para formatear el contenido.",
+      
+      "ESTRUCTURA OBLIGATORIA de la lección:",
+      "1. TÍTULO: Debe incluir el nombre del subtema, una descripción breve y un emoji relevante. Formato: 'Nombre del Subtema: Descripción Breve 🔄'",
+      "2. INTRODUCCIÓN CONCEPTUAL: 2-3 párrafos que expliquen el concepto de manera clara, usando analogías cuando sea útil. Debe ser accesible y educativo.",
+      "3. VALOR CLAVE: Una sección que explique por qué es importante este concepto y qué problema resuelve.",
+      "4. EJEMPLOS PRÁCTICOS: Incluye ejemplos de código reales y funcionales. Cada bloque de código debe:",
+      "   - Estar precedido por una explicación del contexto",
+      "   - Estar en bloques de código markdown con el lenguaje especificado (```typescript, ```javascript, etc.)",
+      "   - Tener comentarios explicativos cuando sea necesario",
+      "   - Ir seguido de una explicación de qué hace el código y por qué es útil",
+      "5. SECCIONES ADICIONALES: Puedes incluir secciones como 'Tipos de Utilidad', 'Decoradores Personalizados', 'Tipos Condicionales', etc., según el subtema.",
+      "6. CIERRE: Un párrafo final que conecte el concepto con el contexto más amplio del curso.",
+      
+      "ESTILO Y TONO:",
+      "- Escribe de forma narrativa y educativa, como si estuvieras explicando a un compañero de trabajo",
+      "- Usa analogías y metáforas para hacer los conceptos más accesibles",
+      "- Sé específico y práctico, evita abstracciones innecesarias",
+      "- El código debe ser real y funcional, no pseudocódigo",
+      "- Usa emojis en los títulos de secciones principales para hacer el contenido más visual",
+      
+      "LÍMITES Y REGLAS:",
+      "- No incluyas contenido de subtemas futuros",
+      "- Mantén la lección entre 800 y 6000 palabras (más detallada que antes)",
+      "- Cada bloque de código debe ser completo pero conciso (máximo 20-25 líneas)",
+      "- Puedes referenciar conceptos de subtemas anteriores o del conocimiento previo del usuario",
+      "- El contenido debe ser autónomo: alguien que lea solo esta lección debe entender el concepto",
+      "- Integra los objetivos de aprendizaje dentro del contenido narrativo, no como lista separada"
     ].join("\n");
 
     const railJson =
@@ -102,7 +116,7 @@ export async function POST(req: NextRequest) {
           }
         ],
         temperature: 0.3,
-        max_tokens: 1600
+        max_tokens: 4000
       })
     });
 
@@ -120,7 +134,7 @@ export async function POST(req: NextRequest) {
     const out = JSON.parse(content);
 
     // Validación mínima adicional
-    if (!out?.lesson_markdown || !Array.isArray(out?.objectives)) {
+    if (!out?.content || !out?.title) {
       return Response.json({ error: "JSON inválido del tutor" }, { status: 502 });
     }
 
