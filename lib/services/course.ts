@@ -76,38 +76,13 @@ export const CourseService = {
         /**
          * Call the system prompt creator
          */
-        const systemPromptCreatorResponse = await fetch('/api/openai/systemPromptCreator', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                roleText,
-                focus,
-            }),
-        });
-        if (!systemPromptCreatorResponse.ok) {
-            throw new Error('Failed to create course');
-        }
-        const systemPromptData = await systemPromptCreatorResponse.json();
+        const systemPromptData = await ApiServices.systemPromptCreator.create(roleText, focus);
         console.log("Info del systemPromptData: ", systemPromptData)
 
         /**
          * Call the planner
          */
-        const plannerResponse = await fetch('/api/openai/planner', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                knowledgeProfile: systemPromptData.knowledge,
-            }),
-        });
-        if (!plannerResponse.ok) {
-            throw new Error('Failed to create course');
-        }
-        const plannerData = await plannerResponse.json(); // : tipado plannerData
+        const plannerData = await ApiServices.planner.create(systemPromptData.knowledge);
         console.log("plannerData from service:", plannerData);
 
         /**
