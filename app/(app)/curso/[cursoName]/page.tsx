@@ -355,7 +355,7 @@ export default function LeccionViewer() {
   if (!sub) return
 
   const moduleIndex = temaryData.modules.findIndex(
-    m => m.order === sub.moduleOrder
+    (m: ModuleTemaryI) => m.order === sub.moduleOrder
   )
 
   if (moduleIndex !== -1) {
