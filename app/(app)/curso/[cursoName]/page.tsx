@@ -16,7 +16,7 @@ import { Progress } from '@/components/ui/progress';
 import { ModuleTemaryI, EstadoSubtema } from '@/types/course';
 import { useTemary, useContextSubtopic, useUpdateSubtemaEstado } from '@/hooks/useCourse';
 import { toast } from "sonner";
-
+import MarkdownRenderer from '@/components/MarkdownRenderer';
 const mockTecnologias = ['PHP', 'MySQL', 'HTML'];
 
 type FlatSubtopic = {
@@ -592,12 +592,20 @@ export default function LeccionViewer() {
                   className="prose prose-invert max-w-none mb-6 md:mb-8"
                   style={{ color: '#ffffff', lineHeight: '1.8' }}
                 >
-                  <p className="mb-3 md:mb-4 text-sm md:text-base">
-                    {flatSubtopics[subtemaActual]?.title ? 
+                  <div className="mb-3 md:mb-4 text-sm md:text-base">
+                    {/*flatSubtopics[subtemaActual]?.title ? 
                       `Contenido del subtema: ${flatSubtopics[subtemaActual].title}. Este es un placeholder para el contenido real que se cargará desde la base de datos.` :
                       'Cargando contenido...'
+                    */
+                      estadosSubtemas[subtemaActual] !== 'vacio' && (
+                        <div className="flex flex-col gap-4">
+
+                          {/* Contenido de subtema */}                          
+                          { <MarkdownRenderer content={contextSubtopic?.content || ''} /> }
+                        </div>
+                      )
                     }
-                  </p>
+                  </div>
                 </div>
 
                 <div className="flex flex-col gap-3 md:gap-4 pt-4 md:pt-6 border-t" style={{ borderColor: 'rgba(0, 163, 226, 0.2)' }}>
@@ -635,17 +643,8 @@ export default function LeccionViewer() {
                   {estadosSubtemas[subtemaActual] !== 'vacio' && (
                     <div className="flex flex-col gap-4">
 
-                      {/* Contenido de subtema */}
-                      <p className="w-full text-sm md:text-base"
-                      style={{
-                        color: '#ffffff',
-                        textAlign: 'center'
-                      }}>
-                        Contenido de la BD
-                        <br />
-                        { contextSubtopic?.content }
-                      </p>
-
+                      {/* Boton de siguiente subtema */}
+                      
                       {subtemaActual < totalSubtopics - 1 && (
                         <Button
                         onClick={handleSiguiente}
