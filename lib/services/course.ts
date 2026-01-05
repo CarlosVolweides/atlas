@@ -102,7 +102,7 @@ export const CourseService = {
                     typeof plannerData === "string"
                         ? JSON.parse(plannerData)
                         : plannerData,
-                systemPrompt: systemPromptData ?? "",
+                systemPrompt: systemPromptData.knowledge ?? "",
             };
 
             return supabase.from("Cursos")
