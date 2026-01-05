@@ -13,9 +13,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { SubtopicTemaryI, ModuleTemaryI, EstadoSubtema, TemaryInterface } from '@/types/course';
+import { ModuleTemaryI, EstadoSubtema } from '@/types/course';
 import { useTemary, useContextSubtopic, useUpdateSubtemaEstado } from '@/hooks/useCourse';
-import { obtainModuleIndexByGlobalIndex } from '@/lib/utils/resolve_index';
 import { toast } from "sonner";
 
 const mockTecnologias = ['PHP', 'MySQL', 'HTML'];
@@ -28,26 +27,12 @@ type FlatSubtopic = {
   state: EstadoSubtema
 }
 
-const getAllSubtopics = (temaryData: TemaryInterface) => {
-    const allSubtopics: Array<{ moduleIndex: number; subtopicIndex: number; subtopic: SubtopicTemaryI }> = [];
-    temaryData?.modules.forEach((module: ModuleTemaryI, moduleIndex: number) => {
-      module.subtopics.forEach((subtopic: SubtopicTemaryI, subtopicIndex: number) => {
-        allSubtopics.push({ moduleIndex, subtopicIndex, subtopic });
-      });
-    });
-    return allSubtopics;
-  };
-
 export default function LeccionViewer() {
   const router = useRouter();
   const params = useParams();
   const courseId = parseInt(params?.cursoName as string || '0');
   const { data: temaryData } = useTemary(courseId, { enabled: courseId > 0 });
   const nombreCurso = (params?.cursoName as string) || 'Curso';
-  
-  // Helper: Obtener todos los subtemas en un array plano
-  
-  /*const allSubtopics = useMemo(() => getAllSubtopics(temaryData), [temaryData]);*/
 
   const flatSubtopics = useMemo<FlatSubtopic[]>(() => {
   if (!temaryData) return []
@@ -109,15 +94,6 @@ export default function LeccionViewer() {
     ordenActivo?.sub ?? null,
     tieneContenido // <--- Hara la consulta solo si no es 'vacio'
   )
-
-  // Función para actualizar un estado específico cuando el usuario interactúa
-  const actualizarEstado = (indexGlobal: number, nuevoEstado: EstadoSubtema) => {
-    setEstadosSubtemas(prev => {
-      const copia = [...prev];
-      copia[indexGlobal] = nuevoEstado;
-      return copia;
-    });
-  };
 
   // Función para obtener el estado actual de un subtema
   const obtenerEstadoSubtema = (index: number): EstadoSubtema => {
@@ -258,7 +234,6 @@ export default function LeccionViewer() {
   };
   const handleCambiarSubtema = (index: number) => {
     setSubtemaActual(index);
-    
     setsubtopicIsLoading(false);
     
   }
