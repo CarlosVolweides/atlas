@@ -30,5 +30,40 @@ export const ApiServices = {
             }
             return response.json();
         }
+    },
+    subtopicStarted: {
+        async create(knowledgeProfile: string, subtopic: { title: string; description?: string; }) {
+            const response = await fetch(`/api/${llmService}/subtopicStarted`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ knowledgeProfile, subtopic }),
+            });
+            if (!response.ok) {
+                const error = await response.json().catch(() => ({ error: 'Failed to create subtopic lesson' }));
+                throw new Error(error.error || 'Failed to create subtopic lesson');
+            }
+            return response.json();
+        }
+    },
+    subtopicStartedStreaming: {
+        async create(knowledgeProfile: string, subtopic: { title: string; description?: string; }) {
+            const response = await fetch(`/api/${llmService}/subtopicStarted(streming)`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ knowledgeProfile, subtopic }),
+            });
+            if (!response.ok) {
+                const error = await response.json().catch(() => ({ error: 'Failed to start subtopic streaming' }));
+                throw new Error(error.error || 'Failed to start subtopic streaming');
+            }
+            if (!response.body) {
+                throw new Error('No stream body received');
+            }
+            return response.body;
+        }
     }
 }
