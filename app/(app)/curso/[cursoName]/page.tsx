@@ -5,7 +5,7 @@ import {
   ArrowLeft, BookOpen, 
   CheckCircle2, Circle, 
   Clock, XCircle, 
-  AlertCircle, Timer, 
+  AlertCircle, 
   ClipboardList, ChevronRight,
   ChevronDown,
   ChevronUp
@@ -87,35 +87,10 @@ export default function LeccionViewer() {
   const [subtemaAprobado, setSubtemaAprobado] = useState(false);
   const [modoPrueba, setModoPrueba] = useState(false);
 
-  // Estado para tracking de tiempo por subtema
-  const [tiemposPorSubtema, setTiemposPorSubtema] = useState<number[]>(
-    new Array(totalSubtopics).fill(0)
-  );
-  const [tiempoSubtemaActual, setTiempoSubtemaActual] = useState(0); // Tiempo del subtema actual
-  const tiempoInterval = useRef<NodeJS.Timeout | null>(null);
-
   //Estado de generacion de subtemas
   const [subtopicIsLoading, setsubtopicIsLoading ] = useState(false)
   //Estado de actualizacion de subtema
   const [isAdvancing, setIsAdvancing] = useState(false)
-  // Iniciar el contador de tiempo para el subtema actual
-  useEffect(() => {
-    // Limpiar intervalo anterior si existe
-    if (tiempoInterval.current) {
-      clearInterval(tiempoInterval.current);
-    }
-
-    // Iniciar nuevo intervalo
-    tiempoInterval.current = setInterval(() => {
-      setTiempoSubtemaActual(prev => prev + 1);
-    }, 1000);
-
-    return () => {
-      if (tiempoInterval.current) {
-        clearInterval(tiempoInterval.current);
-      }
-    };
-  }, [subtemaActual]); // Reiniciar cuando cambia de subtema
 
   const tieneContenido = useMemo(() => {
     const estadoActual = estadosSubtemas[subtemaActual];
@@ -134,29 +109,6 @@ export default function LeccionViewer() {
     ordenActivo?.sub ?? null,
     tieneContenido // <--- Hara la consulta solo si no es 'vacio'
   )
-
-  // Función para formatear el tiempo
-  const formatearTiempo = (segundos: number): string => {
-    const horas = Math.floor(segundos / 3600);
-    const minutos = Math.floor((segundos % 3600) / 60);
-    const segs = segundos % 60;
-
-    if (horas > 0) {
-      return `${horas}h ${minutos}m`;
-    } else if (minutos > 0) {
-      return `${minutos}m ${segs}s`;
-    } else {
-      return `${segs}s`;
-    }
-  };
-
-  // Calcular tiempo total invertido en subtemas aprobados
-  const tiempoTotalAprobados = (tiemposPorSubtema || []).reduce((total, tiempo, index) => {
-    if (estadosSubtemas[index] === 'aprobado') {
-      return total + tiempo;
-    }
-    return total;
-  }, 0);
 
   // Función para actualizar un estado específico cuando el usuario interactúa
   const actualizarEstado = (indexGlobal: number, nuevoEstado: EstadoSubtema) => {
@@ -304,22 +256,6 @@ export default function LeccionViewer() {
   const handleVolver = () => {
     router.push('/inicio');
   };
-/*
-  const handleCambiarSubtema = (index: number) => {
-    setSubtemaActual(index);
-    // Resetear el contador de tiempo para el nuevo subtema
-    setTiempoSubtemaActual(0);
-    setModoTutoria(false);
-    setSubtemaAprobado(false);
-    setModoPrueba(false);
-    setsubtopicIsLoading(false);
-    
-    // Expandir el módulo que contiene este subtema
-    const currentSubtopic = allSubtopics[index];
-    if (currentSubtopic) {
-      setModulosExpandidos(prev => new Set([...prev, currentSubtopic.moduleIndex]));
-    }
-  };*/
   const handleCambiarSubtema = (index: number) => {
     setSubtemaActual(index);
     
@@ -431,21 +367,6 @@ export default function LeccionViewer() {
               </div>
               <p className="text-lg" style={{ color: '#ffffff' }}>
                 {estadosSubtemas.filter(e => e === 'completado').length}/{totalSubtopics}
-              </p>
-            </div>
-
-            <div className="flex-1 px-3 py-2 rounded-lg" style={{ 
-              background: 'rgba(0, 163, 226, 0.2)',
-              backdropFilter: 'blur(10px)',
-              borderColor: '#00A3E2',
-              borderWidth: '1px'
-            }}>
-              <div className="flex items-center gap-2 mb-1">
-                <Timer className="w-3 h-3" style={{ color: '#00A3E2' }} />
-                <span className="text-xs" style={{ color: '#cccccc' }}>Tiempo</span>
-              </div>
-              <p className="text-lg" style={{ color: '#ffffff' }}>
-                {formatearTiempo(tiempoTotalAprobados)}
               </p>
             </div>
           </div>
