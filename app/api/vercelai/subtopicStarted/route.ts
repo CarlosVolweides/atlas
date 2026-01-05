@@ -38,12 +38,12 @@ export async function POST(req: NextRequest) {
   try {
     const { knowledgeProfile, subtopic } = await req.json();
 
-    // subtopic: { title: string; description?: string; objectives: string[] }
+    // subtopic: { title: string; description?: string; }
     if (!knowledgeProfile) {
       return Response.json({ error: "knowledgeProfile es requerido" }, { status: 400 });
     }
-    if (!subtopic?.title || !Array.isArray(subtopic?.objectives) || subtopic.objectives.length === 0) {
-      return Response.json({ error: "subtopic.title y subtopic.objectives[] son requeridos" }, { status: 400 });
+    if (!subtopic?.title) {
+      return Response.json({ error: "subtopic.title es requerido" }, { status: 400 });
     }
 
     // === Rails ===
@@ -89,8 +89,7 @@ export async function POST(req: NextRequest) {
     // Mensaje de usuario con los datos del subtema (no repitas knowledge aquí)
     const userPayload = {
       subtopicTitle: subtopic.title,
-      description: subtopic.description ?? "",
-      objectives: subtopic.objectives
+      description: subtopic.description ?? ""
     };
 
     const res = await fetch(`${GATEWAY_BASE}/v1/chat/completions`, {
