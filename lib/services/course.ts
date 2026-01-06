@@ -39,6 +39,26 @@ export const CourseService = {
         return dataCourses;
     },
 
+    /** 
+     * Get info of one Course 
+     */
+    async getCourseInfo(cursoId: number) {
+        if (!user) {
+            throw new Error("Usuario no autenticado. No es posible obtener");
+        }
+        
+        const { data: courseInfo, error } = await supabase.from('Cursos')
+        .select('tecnologia, dificultad, conocimientosPrevios, herramientasRequeridas, tecnologiasExcluidas')
+        .eq('id', cursoId)
+        .single();
+
+        if (error) {
+             throw new Error(`Fallo al obtener info del curso: ${error.message}`);
+        }
+        console.log("courseInfo", courseInfo)
+        return courseInfo;
+    },
+
     /**
      * Create a new course
      * @param course - The course to create

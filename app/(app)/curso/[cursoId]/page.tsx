@@ -14,10 +14,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { ModuleTemaryI, EstadoSubtema } from '@/types/course';
-import { useTemary, useContextSubtopic, useUpdateSubtemaEstado } from '@/hooks/useCourse';
+import { useTemary, useContextSubtopic, useUpdateSubtemaEstado, useCourseInfo } from '@/hooks/useCourse';
 import { toast } from "sonner";
 import MarkdownRenderer from '@/components/MarkdownRenderer';
-const mockTecnologias = ['PHP', 'MySQL', 'HTML'];
 
 type FlatSubtopic = {
   globalIndex: number
@@ -30,9 +29,10 @@ type FlatSubtopic = {
 export default function LeccionViewer() {
   const router = useRouter();
   const params = useParams();
-  const courseId = parseInt(params?.cursoName as string || '0');
+  const courseId = parseInt(params?.cursoId as string || '0');
   const { data: temaryData } = useTemary(courseId, { enabled: courseId > 0 });
-  const nombreCurso = (params?.cursoName as string) || 'Curso';
+  const idCurso = parseInt(params?.cursoId as string);
+  const {data: infoCurso} = useCourseInfo(idCurso)
 
   const flatSubtopics = useMemo<FlatSubtopic[]>(() => {
   if (!temaryData) return []
@@ -315,9 +315,10 @@ export default function LeccionViewer() {
               <BookOpen className="w-4 h-4 text-white" />
             </div>
             <div className="min-w-0 flex-1">
-              <h1 className="text-lg truncate" style={{ color: '#ffffff' }}>{nombreCurso}</h1>
+              <h1 className="text-lg truncate" style={{ color: '#ffffff' }}>{infoCurso?.tecnologia}</h1>
               <div className="flex gap-2 mt-1 flex-wrap">
-                {mockTecnologias.map((tech, i) => (
+                {infoCurso?.herramientasRequeridas &&
+                infoCurso?.conocimientosPrevios.map((tech : string[], i: number) => (
                   <span key={i} className="text-xs px-2 py-0.5 rounded" style={{ 
                     background: 'rgba(0, 163, 226, 0.3)',
                     color: '#ffffff'
@@ -379,9 +380,10 @@ export default function LeccionViewer() {
               <BookOpen className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-xl" style={{ color: '#ffffff' }}>{nombreCurso}</h1>
+              <h1 className="text-xl" style={{ color: '#ffffff' }}>{infoCurso?.tecnologia}</h1>
               <div className="flex gap-2 mt-1">
-                {mockTecnologias.map((tech, i) => (
+                {infoCurso?.herramientasRequeridas &&
+                infoCurso?.herramientasRequeridas.map((tech: string[], i: number) => (
                   <span key={i} className="text-xs px-2 py-0.5 rounded" style={{ 
                     background: 'rgba(0, 163, 226, 0.3)',
                     color: '#ffffff'

@@ -26,6 +26,18 @@ export const useCourses = () => {
     });
 }
 
+export const useCourseInfo = (courseId: number) => {
+    return useQuery({
+        queryKey: ['course-info', courseId],
+        queryFn: async () => { 
+            const data = await CourseService.getCourseInfo(courseId);
+            console.log("Course info from hook")
+            return data;
+        },
+        enabled: courseId > 0
+    });
+}
+
 export const useCreateCourse = () => {
     const queryClient = useQueryClient();
     return useMutation({
