@@ -145,7 +145,7 @@ export default function InicioScreen() {
         <DropdownMenu>
           <DropdownMenuTrigger className="focus:outline-none">
             <div className="w-10 h-10 rounded-full overflow-hidden cursor-pointer ring-2 ring-cyan-400 hover:ring-cyan-300 transition-all">
-              <User className="w-4 h-4 text-white" />
+              <User className="w-10 h-10 text-white" />
             </div>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48" style={{ background: '#262422', borderColor: '#00A3E2' }}>
