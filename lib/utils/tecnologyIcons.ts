@@ -1,5 +1,4 @@
 import { ComponentType, SVGProps } from "react";
-import { Technology } from "@/types/course";
 import JavaScript from "@/assets/icons/javascript";
 import Typescript from "@/assets/icons/typescript";
 import Python from "@/assets/icons/python";
@@ -21,12 +20,23 @@ import Cobol from "@/assets/icons/cobol";
 import Fortran from "@/assets/icons/fortran";
 import CSSNew from "@/assets/icons/css";
 import HTML5 from "@/assets/icons/html";
-
+import Astro from "@/assets/icons/astro";
+import Expressjs from "@/assets/icons/express";
+import Vue from "@/assets/icons/vue";
+import NestJS from "@/assets/icons/nestjs";
+import Flutter from "@/assets/icons/flutter";
+import Spring from "@/assets/icons/spring";
+import Remix from "@/assets/icons/remix";
+import Nextjs from "@/assets/icons/nextjs";
+import Angular from "@/assets/icons/angular";
+import Blitz from "@/assets/icons/blitz";
+import Django from "@/assets/icons/django";
 
 export const technologyIcons: Record<
-  Technology,
+  string,
   ComponentType<SVGProps<SVGSVGElement>>
 > = {
+  //Languages
   html: HTML5,
   css: CSSNew,
   dart: Dart,
@@ -45,8 +55,19 @@ export const technologyIcons: Record<
   ruby: Ruby,
   rust: Rust,
   swift: Swift,
-
+  //Frameworks
+  blitz: Blitz,
+  django: Django,
   react: React,
   laravel: Laravel,
   tailwind: TailwindCSS,
+  angular: Angular,
+  astro: Astro,
+  express: Expressjs,
+  vuejs: Vue,
+  nestjs: NestJS,
+  flutter: Flutter,
+  spring: Spring,
+  remix: Remix,
+  nextjs: Nextjs,
 };
