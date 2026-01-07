@@ -65,6 +65,28 @@ export type EstadoSubtema =
   | 'reprobado' 
   | 'completado';
 
+export type Technology =
+  | "html"
+  | "css"
+  | "dart"
+  | "cobol"
+  | "fortran"
+  | "javascript"
+  | "typescript"
+  | "python"
+  | "php"
+  | "c++"
+  | "c#"
+  | "go"
+  | "java"
+  | "kotlin"
+  | "lua"
+  | "ruby"
+  | "rust"
+  | "swift"
+  | "react"
+  | "laravel"
+  | "tailwind";
 
 export interface SubtopicTemaryI {
   order: number;
