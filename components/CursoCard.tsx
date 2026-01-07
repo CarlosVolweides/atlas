@@ -5,7 +5,6 @@ import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { technologyIcons } from '@/lib/utils/tecnologyIcons';
-import { Technology } from "@/types/course";
 
 interface CursoCardProps {
   nombre: string;
@@ -17,7 +16,7 @@ interface CursoCardProps {
 
 
 export function CursoCard({ nombre, porcentaje, tecnologias, onEdit, onDelete }: CursoCardProps) {
-  const Icon = technologyIcons[nombre.toLowerCase() as Technology]
+  const Icon = technologyIcons[nombre.toLowerCase() as string]
   return (
     <Card 
       className="overflow-hidden transition-all hover:scale-105 cursor-pointer"
