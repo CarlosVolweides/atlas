@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader } from './ui/card';
 import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
+import { technologyIcons } from '@/lib/utils/tecnologyIcons';
 
 interface CursoCardProps {
   nombre: string;
@@ -13,7 +14,9 @@ interface CursoCardProps {
   onDelete?: () => void;
 }
 
+
 export function CursoCard({ nombre, porcentaje, tecnologias, onEdit, onDelete }: CursoCardProps) {
+  const Icon = technologyIcons[nombre.toLowerCase() as string]
   return (
     <Card 
       className="overflow-hidden transition-all hover:scale-105 cursor-pointer"
@@ -31,7 +34,10 @@ export function CursoCard({ nombre, porcentaje, tecnologias, onEdit, onDelete }:
               className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
               style={{ background: 'linear-gradient(135deg, #00A3E2 0%, #006b9a 100%)' }}
             >
-              <BookOpen className="w-5 h-5 text-white" />
+              {Icon 
+              ? (<Icon className="w-7 h-7" />) 
+              : (<BookOpen className="w-5 h-5 text-white" />)}
+              
             </div>
             <div className="flex-1 min-w-0">
               <h3 
