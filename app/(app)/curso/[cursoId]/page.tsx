@@ -15,6 +15,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { ModuleTemaryI, EstadoSubtema } from '@/types/course';
 import { useTemary, useContextSubtopic, useUpdateSubtemaEstado, useCourseInfo } from '@/hooks/useCourse';
+import { useSubtopicStarted } from '@/hooks/useSubtopic';
 import { toast } from "sonner";
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 
@@ -76,6 +77,11 @@ export default function LeccionViewer() {
   const [subtopicIsLoading, setsubtopicIsLoading ] = useState(false)
   //Estado de actualizacion de subtema
   const [isAdvancing, setIsAdvancing] = useState(false)
+  //Estado para contenido generado temporalmente (no persistido en BD)
+  const [generatedContent, setGeneratedContent] = useState<{ title: string; content: string; estimated_read_time_min?: number } | null>(null)
+
+  // Hook para generar contenido de subtema
+  const { mutateAsync: generateSubtopic, isLoading: isGenerating } = useSubtopicStarted()
 
   const tieneContenido = useMemo(() => {
     const estadoActual = estadosSubtemas[subtemaActual];
@@ -273,6 +279,38 @@ export default function LeccionViewer() {
     setModulosExpandidos(prev => new Set([...prev, moduleIndex]))
   }
 }, [subtemaActual, flatSubtopics, temaryData])
+
+  // useEffect para generar contenido automáticamente cuando se navega a un subtema vacío
+  useEffect(() => {
+    // Limpiar contenido generado al cambiar de subtema
+    setGeneratedContent(null)
+
+    // Verificar condiciones para generar contenido
+    if (subtemaActual === null || !flatSubtopics[subtemaActual]) return
+    if (!infoCurso?.systemPrompt) return
+
+    const estadoActual = estadosSubtemas[subtemaActual]
+    if (estadoActual !== 'vacio') return
+
+    const subtopic = flatSubtopics[subtemaActual]
+    if (!subtopic) return
+
+    // Generar contenido automáticamente
+    generateSubtopic({
+      knowledgeProfile: infoCurso.systemPrompt ?? "",
+      subtopic: {
+        title: subtopic.title,
+        description: ''
+      }
+    })
+      .then((response) => {
+        setGeneratedContent(response)
+      })
+      .catch((error) => {
+        // El hook ya maneja el toast de error
+        console.error('Error al generar subtema:', error)
+      })
+  }, [subtemaActual, flatSubtopics, estadosSubtemas, infoCurso?.systemPrompt, generateSubtopic])
 
 
   const porcentajeCompletado = Math.round(
@@ -595,18 +633,19 @@ export default function LeccionViewer() {
                   style={{ color: '#ffffff', lineHeight: '1.8' }}
                 >
                   <div className="mb-3 md:mb-4 text-sm md:text-base">
-                    {/*flatSubtopics[subtemaActual]?.title ? 
-                      `Contenido del subtema: ${flatSubtopics[subtemaActual].title}. Este es un placeholder para el contenido real que se cargará desde la base de datos.` :
-                      'Cargando contenido...'
-                    */
-                      estadosSubtemas[subtemaActual] !== 'vacio' && (
-                        <div className="flex flex-col gap-4">
-
-                          {/* Contenido de subtema */}                          
-                          { <MarkdownRenderer content={contextSubtopic?.content || ''} /> }
-                        </div>
-                      )
-                    }
+                    {isGenerating ? (
+                      <div className="flex items-center justify-center py-8">
+                        <p style={{ color: '#ffffff' }}>Cargando...</p>
+                      </div>
+                    ) : generatedContent?.content ? (
+                      <div className="flex flex-col gap-4">
+                        <MarkdownRenderer content={generatedContent.content} />
+                      </div>
+                    ) : contextSubtopic?.content ? (
+                      <div className="flex flex-col gap-4">
+                        <MarkdownRenderer content={contextSubtopic.content} />
+                      </div>
+                    ) : null}
                   </div>
                 </div>
 

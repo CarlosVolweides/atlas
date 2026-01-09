@@ -4,7 +4,7 @@ export const runtime = "nodejs";
 
 const GATEWAY_BASE = process.env.AI_GATEWAY_URL!;
 const GATEWAY_KEY = process.env.AI_GATEWAY_API_KEY!;
-const MODEL = process.env.AI_MODEL ?? "openai/gpt-4o-mini";
+const MODEL = process.env.AI_MODEL ?? "google/gemini-3-flash";
 
 // JSON Schema estricto para la salida del tutor
 const lessonSchema = {
@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
       description: subtopic.description ?? ""
     };
 
-    const res = await fetch(`${GATEWAY_BASE}/v1/chat/completions`, {
+    const res = await fetch(`${GATEWAY_BASE}`, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${GATEWAY_KEY}`,
@@ -140,7 +140,7 @@ export async function POST(req: NextRequest) {
     return Response.json(out, { status: 200, headers: { "Cache-Control": "no-store" } });
   } catch (err: any) {
     return Response.json(
-      { error: "subtopicStarted failed", detail: err?.message ?? String(err) },
+      { error: "subtopicStarted failed:", detail: err?.message ?? String(err) },
       { status: 502 }
     );
   }
