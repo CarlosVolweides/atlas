@@ -2,12 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
-const GATEWAY_BASE = process.env.AI_GATEWAY_URL!;
-const GATEWAY_KEY = process.env.AI_GATEWAY_API_KEY!;
+const GATEWAY_BASE = process.env.AI_GATEWAY_URL;
+const GATEWAY_KEY = process.env.AI_GATEWAY_API_KEY;
 const MODEL = process.env.AI_MODEL ?? "openai/gpt-4o-mini";
 
 export async function POST(req: NextRequest) {
   try {
+    if (!GATEWAY_BASE) {
+      return NextResponse.json({ error: "AI_GATEWAY_URL no está definida en las variables de entorno" }, { status: 500 });
+    }
+
+    if (!GATEWAY_KEY) {
+      return NextResponse.json({ error: "AI_GATEWAY_API_KEY no está definida en las variables de entorno" }, { status: 500 });
+    }
+
     const { roleText, focus } = await req.json();
     if (!roleText) {
       return NextResponse.json({ error: "roleText requerido" }, { status: 400 });
@@ -69,8 +77,16 @@ export async function POST(req: NextRequest) {
     });
 
     if (!res.ok) {
-      const text = await res.text().catch(() => "");
-      return NextResponse.json({ error: "Vercel AI systemPromptCreator failed", detail: text }, { status: 502 });
+      const errorText = await res.text().catch(() => "No se pudo leer el error");
+      return NextResponse.json(
+        { 
+          error: "Vercel AI systemPromptCreator failed", 
+          detail: errorText,
+          status: res.status,
+          statusText: res.statusText
+        }, 
+        { status: 502 }
+      );
     }
 
     const data = await res.json();
