@@ -12,6 +12,7 @@ interface SubtopicParams {
 interface SubtopicStartedResponse {
   title: string;
   content: string;
+  estimated_read_time_min?: number;
 }
 
 export const useSubtopicStarted = () => {

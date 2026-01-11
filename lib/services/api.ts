@@ -1,4 +1,4 @@
-const llmService = process.env.LLM_SERVICE || "openai";
+const llmService = process.env.LLM_SERVICE || "vercelai";
 
 export const ApiServices = {
     planner: {
@@ -42,7 +42,7 @@ export const ApiServices = {
             });
             if (!response.ok) {
                 const error = await response.json().catch(() => ({ error: 'Failed to create subtopic lesson' }));
-                throw new Error(error.error || 'Failed to create subtopic lesson');
+                throw new Error('El error es: ' + error.error || 'Failed to create subtopic lesson');
             }
             return response.json();
         }

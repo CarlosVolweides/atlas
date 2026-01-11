@@ -48,7 +48,7 @@ export const CourseService = {
         }
         
         const { data: courseInfo, error } = await supabase.from('Cursos')
-        .select('tecnologia, dificultad, conocimientosPrevios, herramientasRequeridas, tecnologiasExcluidas')
+        .select('tecnologia, dificultad, conocimientosPrevios, herramientasRequeridas, tecnologiasExcluidas, systemPrompt')
         .eq('id', cursoId)
         .single();
 

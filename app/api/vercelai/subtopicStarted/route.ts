@@ -2,9 +2,9 @@ import { NextRequest } from "next/server";
 
 export const runtime = "nodejs";
 
-const GATEWAY_BASE = process.env.AI_GATEWAY_URL!;
-const GATEWAY_KEY = process.env.AI_GATEWAY_API_KEY!;
-const MODEL = process.env.AI_MODEL ?? "openai/gpt-4o-mini";
+const GATEWAY_BASE = process.env.AI_GATEWAY_URL;
+const GATEWAY_KEY = process.env.AI_GATEWAY_API_KEY;
+const MODEL = process.env.AI_MODEL ?? "google/gemini-3-flash";
 
 // JSON Schema estricto para la salida del tutor
 const lessonSchema = {
@@ -36,6 +36,14 @@ const lessonSchema = {
 
 export async function POST(req: NextRequest) {
   try {
+    if (!GATEWAY_BASE) {
+      return Response.json({ error: "AI_GATEWAY_URL no está definida en las variables de entorno" }, { status: 500 });
+    }
+
+    if (!GATEWAY_KEY) {
+      return Response.json({ error: "AI_GATEWAY_API_KEY no está definida en las variables de entorno" }, { status: 500 });
+    }
+
     const { knowledgeProfile, subtopic } = await req.json();
 
     // subtopic: { title: string; description?: string; }
@@ -115,13 +123,21 @@ export async function POST(req: NextRequest) {
           }
         ],
         temperature: 0.3,
-        max_tokens: 4000
+        max_tokens: 12000
       })
     });
 
     if (!res.ok) {
-      const text = await res.text().catch(() => "");
-      return Response.json({ error: "Vercel AI subtopicStarted failed", detail: text }, { status: 502 });
+      const errorText = await res.text().catch(() => "No se pudo leer el error");
+      return Response.json(
+        { 
+          error: "Vercel AI subtopicStarted failed", 
+          detail: errorText,
+          status: res.status,
+          statusText: res.statusText
+        }, 
+        { status: 502 }
+      );
     }
 
     const data = await res.json();
@@ -140,7 +156,7 @@ export async function POST(req: NextRequest) {
     return Response.json(out, { status: 200, headers: { "Cache-Control": "no-store" } });
   } catch (err: any) {
     return Response.json(
-      { error: "subtopicStarted failed", detail: err?.message ?? String(err) },
+      { error: "subtopicStarted failed:", detail: err?.message ?? String(err) },
       { status: 502 }
     );
   }
