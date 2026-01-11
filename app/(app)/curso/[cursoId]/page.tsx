@@ -13,7 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { ModuleTemaryI, EstadoSubtema } from '@/types/course';
+import { ModuleTemaryI, EstadoSubtema, ordenSubtema } from '@/types/course';
 import { useTemary, useContextSubtopic, useUpdateSubtemaEstado, useCourseInfo } from '@/hooks/useCourse';
 import { useSubtopicStarted } from '@/hooks/useSubtopic';
 import { toast } from "sonner";
@@ -91,9 +91,7 @@ export default function LeccionViewer() {
   }, [estadosSubtemas, subtemaActual]);
 
   const {
-    data: contextSubtopic,
-    isLoading,
-    isError
+    data: contextSubtopic
   } = useContextSubtopic(
     courseId,
     ordenActivo?.mod ?? null,
@@ -165,15 +163,17 @@ export default function LeccionViewer() {
     setModoPrueba(true);
   };
   
-  const marcarSubtemaCompletado = async () => {
+  const actualizarSubtema = async () => {
     if (subtemaActual === null) return
 
     const indexObjetivo = subtemaActual
     const sub = flatSubtopics[indexObjetivo]
 
+    const nuevoEstado = estadosSubtemas[subtemaActual] == 'vacio' ? 'pendiente' : 'completado'
+
     setEstadosSubtemas(prev => {
       const copy = [...prev]
-      copy[indexObjetivo] = 'completado'
+      copy[indexObjetivo] = nuevoEstado
       return copy
     })
 
@@ -183,7 +183,7 @@ export default function LeccionViewer() {
         courseId: courseId,
         moduleOrder: sub.moduleOrder,
         subtopicOrder: sub.subtopicOrder,
-        newState: 'completado'
+        newState: nuevoEstado
       })
     } catch (error) {
       // Rollback
@@ -207,7 +207,7 @@ export default function LeccionViewer() {
       setIsAdvancing(true)
       
       try {
-        await marcarSubtemaCompletado()
+        await actualizarSubtema()
         setSubtemaActual(subtemaActual + 1);
         setModoTutoria(false);
         setSubtemaAprobado(false);
@@ -280,7 +280,7 @@ export default function LeccionViewer() {
   }
 }, [subtemaActual, flatSubtopics, temaryData])
 
-  // useEffect para generar contenido automáticamente cuando se navega a un subtema vacío
+  // useEffect para buscar contenido o generar automáticamente cuando se navega a un subtema vacío
   useEffect(() => {
     // Limpiar contenido generado al cambiar de subtema
     setGeneratedContent(null)
@@ -290,21 +290,27 @@ export default function LeccionViewer() {
     if (!infoCurso?.systemPrompt) return
 
     const estadoActual = estadosSubtemas[subtemaActual]
-    if (estadoActual !== 'vacio') return
+    const hasContent = estadoActual !== 'vacio'
+    /*if (estadoActual !== 'vacio') return*/
 
     const subtopic = flatSubtopics[subtemaActual]
     if (!subtopic) return
 
-    // Generar contenido automáticamente
+    // Buscar o generar contenido automáticamente
     generateSubtopic({
       knowledgeProfile: infoCurso.systemPrompt ?? "",
       subtopic: {
         title: subtopic.title,
         description: ''
-      }
+      },
+      courseId: idCurso, 
+      moduleOrder : subtopic.moduleOrder,
+      subtopicOrder: subtopic.subtopicOrder,
+      hasContent: hasContent
     })
       .then((response) => {
         setGeneratedContent(response)
+        if(!hasContent) actualizarSubtema()
       })
       .catch((error) => {
         // El hook ya maneja el toast de error

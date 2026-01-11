@@ -91,3 +91,8 @@ export interface ContextDB {
   content: string,
   esDuda?: boolean
 }
+
+export interface ordenSubtema {
+  mod: number,
+  sub: number
+}

@@ -1,12 +1,16 @@
 // hooks/useSubtopic.ts
 import { useState, useCallback, useRef } from 'react';
-import { useMutation } from 'react-query';
+import { useMutation, useQueryClient } from 'react-query';
 import { ApiServices } from '@/lib/services/api';
 import { toast } from 'sonner';
 
 interface SubtopicParams {
   knowledgeProfile: string;
   subtopic: { title: string; description: string; };
+  courseId: number,
+  moduleOrder: number,
+  subtopicOrder: number,
+  hasContent : boolean
 }
 
 interface SubtopicStartedResponse {
@@ -16,9 +20,14 @@ interface SubtopicStartedResponse {
 }
 
 export const useSubtopicStarted = () => {
+  const queryClient = useQueryClient();
   return useMutation<SubtopicStartedResponse, Error, SubtopicParams>({
-    mutationFn: async ({ knowledgeProfile, subtopic }) => {
-      return await ApiServices.subtopicStarted.create(knowledgeProfile, subtopic);
+    mutationFn: async ({ knowledgeProfile, subtopic, courseId, moduleOrder, subtopicOrder, hasContent }) => {
+      return await ApiServices.subtopicStarted.get(knowledgeProfile, subtopic, courseId, moduleOrder, subtopicOrder, hasContent);
+    },
+    onSuccess: () => {
+        toast.success('Contenido de subtema creado existosamente');
+        queryClient.invalidateQueries(['subtopic-content']);
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Error al generar la lección');

@@ -1,3 +1,5 @@
+import { ContextService } from "./context";
+
 const llmService = process.env.LLM_SERVICE || "vercelai";
 
 export const ApiServices = {
@@ -32,20 +34,33 @@ export const ApiServices = {
         }
     },
     subtopicStarted: {
-        async create(knowledgeProfile: string, subtopic: { title: string; description?: string; }) {
-            const response = await fetch(`/api/${llmService}/subtopicStarted`, {
+        async create(knowledgeProfile: string, subtopic: { title: string; description?: string; }, courseId: number, moduleOrder: number, subtopicOrder: number) {
+            const subtopicStartedResponse = await fetch(`/api/${llmService}/subtopicStarted`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({ knowledgeProfile, subtopic }),
             });
-            if (!response.ok) {
-                const error = await response.json().catch(() => ({ error: 'Failed to create subtopic lesson' }));
+            if (!subtopicStartedResponse.ok) {
+                const error = await subtopicStartedResponse.json().catch(() => ({ error: 'Failed to create subtopic lesson' }));
                 throw new Error('El error es: ' + error.error || 'Failed to create subtopic lesson');
             }
-            return response.json();
-        }
+            console.log("subtopicStartedResponse", subtopicStartedResponse)
+            const contextSubtopicData = await subtopicStartedResponse.json()
+            const contextInsertData = await ContextService.postContext(courseId, moduleOrder, subtopicOrder, contextSubtopicData)
+            console.log("contextInsertData", contextInsertData)
+
+            return contextInsertData;
+        },
+        async get(knowledgeProfile: string, subtopic: { title: string; description?: string;}, courseId: number, moduleOrder: number, subtopicOrder: number, hasContent: boolean) {
+            if(hasContent){
+                return await ContextService.getContextBySubtopic(courseId, moduleOrder, subtopicOrder)
+            }
+            const subtopicStartedData = await ApiServices.subtopicStarted.create(knowledgeProfile, subtopic, courseId, moduleOrder, subtopicOrder )
+            
+            return subtopicStartedData
+        },
     },
     subtopicStartedStreaming: {
         async create(knowledgeProfile: string, subtopic: { title: string; description?: string; }) {
