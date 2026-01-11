@@ -2,13 +2,20 @@ import { NextRequest } from "next/server";
 
 export const runtime = "nodejs";
 
-const GATEWAY_BASE = process.env.AI_GATEWAY_URL!;
-const GATEWAY_KEY = process.env.AI_GATEWAY_API_KEY!;
-const MODEL = process.env.AI_MODEL ?? "openai/gpt-4o-mini";
-
+const GATEWAY_BASE = process.env.AI_GATEWAY_URL;
+const GATEWAY_KEY = process.env.AI_GATEWAY_API_KEY;
+const MODEL = process.env.AI_MODEL ?? "google/gemini-3-flash";
 
 export async function POST(req: NextRequest) {
   try {
+    if (!GATEWAY_BASE) {
+      return Response.json({ error: "AI_GATEWAY_URL no está definida en las variables de entorno" }, { status: 500 });
+    }
+
+    if (!GATEWAY_KEY) {
+      return Response.json({ error: "AI_GATEWAY_API_KEY no está definida en las variables de entorno" }, { status: 500 });
+    }
+
     const { knowledgeProfile, subtopic } = await req.json();
 
     // subtopic: { title: string; description?: string; }
@@ -84,7 +91,7 @@ export async function POST(req: NextRequest) {
           }
         ],
         temperature: 0.3,
-        max_tokens: 4000
+        max_tokens: 12000
       })
     });
 
