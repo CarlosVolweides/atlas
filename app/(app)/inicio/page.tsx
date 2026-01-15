@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { BookOpen, Search, Settings, LogOut, Plus, User } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -13,6 +13,7 @@ import { cursosInicialesEjemplo } from './mocks';
 import { useLogout } from '@/hooks/useAccount';
 import { useCourses, useCreateCourse } from '@/hooks/useCourse';
 import { TemaryModal } from '@/components/TemaryModal';
+import { CursoDetalleModal } from '@/components/CursoDetalleModal';
 
 
 export default function InicioScreen() {
@@ -24,7 +25,7 @@ export default function InicioScreen() {
   const [cursos, setCursos] = useState<CursoCardI[]>(cursosInicialesEjemplo);
   const [editandoIndex, setEditandoIndex] = useState<number | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [cursoAbierto, setCursoAbierto] = useState<number | null>(null);
+  const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
   const router = useRouter();
   const { mutate: logout } = useLogout();
   const { data: cursosData } = useCourses();
@@ -98,14 +99,6 @@ export default function InicioScreen() {
     const cursosActualizados = cursos.filter((_, i) => i !== index);
     setCursos(cursosActualizados);
   };
-
-  // Navegar al curso cuando se selecciona uno
-  useEffect(() => {
-    if (cursoAbierto !== null && cursosData) {
-      // cursoAbierto contiene el ID del curso, no el índice
-      router.push(`/curso/${cursoAbierto}`);
-    }
-  }, [cursoAbierto, cursosData, router]);
 
   return (
     <div 
@@ -208,7 +201,7 @@ export default function InicioScreen() {
           {/* Grid de 3 columnas */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {cursosData?.map((curso, index) => (
-              <div key={index} onClick={() => setCursoAbierto(curso.id)}>
+              <div key={index} onClick={() => setSelectedCourseId(curso.id)}>
                 <CursoCard                  
                   nombre={curso.tecnologia}
                   porcentaje={curso.progreso}
@@ -235,6 +228,12 @@ export default function InicioScreen() {
         open={isTemaryModalOpen}
         onOpenChange={setIsTemaryModalOpen}
         temaryid={createdCourseId || null}
+      />
+
+      <CursoDetalleModal 
+        open={selectedCourseId !== null}
+        onOpenChange={(open) => !open && setSelectedCourseId(null)}
+        courseId={selectedCourseId}
       />
 
     </div>
