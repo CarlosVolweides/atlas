@@ -29,7 +29,21 @@ async function resetDatabase() {
     }
     console.log("✅ Conexión establecida\n");
 
-    // 1. Eliminar Subtemas
+
+    // 1. Eliminar Contexto
+    console.log("🗑️  Eliminando registros de Contexto...");
+    const { error: contextoError } = await supabase
+      .from("Contexto")
+      .delete()
+      .gte("id", 0);
+    
+    if (contextoError) {
+      console.error("❌ Error al eliminar Contexto:", contextoError.message);
+      throw contextoError;
+    }
+    console.log("✅ Contexto eliminado\n");
+
+    // 2. Eliminar Subtemas
     console.log("🗑️  Eliminando registros de Subtemas...");
     const { error: subtemasError } = await supabase
       .from("Subtemas")
@@ -42,7 +56,7 @@ async function resetDatabase() {
     }
     console.log("✅ Subtemas eliminados\n");
 
-    // 2. Eliminar Modulos
+    // 3. Eliminar Modulos
     console.log("🗑️  Eliminando registros de Modulos...");
     const { error: modulosError } = await supabase
       .from("Modulos")
@@ -54,19 +68,6 @@ async function resetDatabase() {
       throw modulosError;
     }
     console.log("✅ Modulos eliminados\n");
-
-    // 3. Eliminar Contexto
-    console.log("🗑️  Eliminando registros de Contexto...");
-    const { error: contextoError } = await supabase
-      .from("Contexto")
-      .delete()
-      .gte("id", 0);
-    
-    if (contextoError) {
-      console.error("❌ Error al eliminar Contexto:", contextoError.message);
-      throw contextoError;
-    }
-    console.log("✅ Contexto eliminado\n");
 
     // 4. Eliminar Cursos
     console.log("🗑️  Eliminando registros de Cursos...");
