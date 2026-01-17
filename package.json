@@ -10,7 +10,8 @@
     "test:gateway": "tsx examples/test-vercel-gateway.ts",
     "test:endpoint:streaming": "tsx examples/test-subtopic-started-streaming.ts",
     "reset:db": "tsx scripts/reset-db.ts",
-    "test:supabase": "tsx examples/test-supabase-query.ts"
+    "test:supabase": "tsx examples/test-supabase-query.ts",
+    "migrate:systemprompt": "tsx scripts/migrate-systemprompt-to-string.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

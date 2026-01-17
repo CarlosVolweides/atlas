@@ -1,7 +1,5 @@
-import { cosineSimilarity } from "ai";
 import { createClient } from "../supabase/client";
-import { User } from "@supabase/supabase-js";
-import { CreateCourseParams, CursoCardI, ModuleDB, PlannerModules } from "@/types/course";
+import { CreateCourseParams, ModuleDB, PlannerModules } from "@/types/course";
 import { buildRoleText } from "../utils/roleText";
 import { buildFocus } from "../utils/focus";
 import { ApiServices } from "./api";
@@ -108,7 +106,7 @@ export const CourseService = {
         /**
          * Call the planner
          */
-        const plannerData = await ApiServices.planner.create(systemPromptData.knowledge, course.razonCurso);
+        const plannerData = await ApiServices.planner.create(systemPromptData, course.razonCurso);
         console.log("plannerData from service:", plannerData);
 
         /**
@@ -130,7 +128,7 @@ export const CourseService = {
                     typeof plannerData === "string"
                         ? JSON.parse(plannerData)
                         : plannerData,
-                systemPrompt: systemPromptData.knowledge ?? "",
+                systemPrompt: systemPromptData ?? "",
             };
 
             return supabase.from("Cursos")

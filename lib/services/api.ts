@@ -30,7 +30,7 @@ export const ApiServices = {
             if (!response.ok) {
                 throw new Error('Failed to create system prompt');
             }
-            return response.json();
+            return response.text();
         }
     },
     subtopicStarted: {

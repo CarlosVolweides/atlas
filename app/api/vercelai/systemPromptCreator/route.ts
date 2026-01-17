@@ -101,14 +101,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Respuesta vacía del modelo" }, { status: 502 });
     }
 
-    // Retornar el texto directamente
-    return NextResponse.json(
-      { knowledge: content }, 
-      { 
-        status: 200, 
-        headers: { "Cache-Control": "no-store" } 
+    // Retornar el texto directamente como string
+    return new NextResponse(content, {
+      status: 200,
+      headers: {
+        "Content-Type": "text/plain",
+        "Cache-Control": "no-store"
       }
-    );
+    });
   } catch (err: any) {
     return NextResponse.json(
       { error: "systemPromptCreator failed", detail: err?.message ?? String(err) },
