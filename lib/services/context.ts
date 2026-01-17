@@ -1,11 +1,10 @@
 import { createClient } from "../supabase/client";
 import {Subtema, Module, ModuleDB} from "@/types/course";
 
-const supabase = createClient();
-
 export const ContextService = {
 
     async getContextBySubtopic(courseId: number, moduleOrder: number, subtopicOrder: number) {
+        const supabase = createClient();
 
         const { data, error } = await supabase
             .from('Contexto') 
@@ -34,6 +33,7 @@ export const ContextService = {
 
     async postContext(courseId: number, moduleOrder: number, subtopicOrder: number, 
         contentData: {title: string; content: string; estimated_read_time_min?: number}) {
+        const supabase = createClient();
 
         // 1. Buscamos el ID del subtema navegando por la jerarquía
         const { data: subtopic, error: subtopicError } = await supabase

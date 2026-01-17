@@ -8,10 +8,19 @@ import { ApiServices } from "./api";
 import { SubtopicService } from "./subtopic";
 import { buildSubtopicStateMap, enrichTemaryWithState } from "../utils/mapSubtopicsState";
 
-const supabase = createClient();
-const { data: { user } } = await supabase.auth.getUser();
-if (!user) {
-    throw new Error("Usuario no autenticado.");
+/**
+ * Helper function to get authenticated user and supabase client
+ * This ensures the token is refreshed if needed before checking authentication
+ */
+async function getAuthenticatedUser() {
+    const supabase = createClient();
+    const { data: { user }, error } = await supabase.auth.getUser();
+    
+    if (error || !user) {
+        throw new Error("Usuario no autenticado. Por favor, inicia sesión.");
+    }
+    
+    return { user, supabase };
 }
 
 export const CourseService = {
@@ -21,9 +30,7 @@ export const CourseService = {
      * @returns The data of the courses
      */
     async getCourses() {
-        if (!user) {
-            throw new Error("Usuario no autenticado. No es posible obtener");
-        }
+        const { user, supabase } = await getAuthenticatedUser();
 
         const { data, error } = await supabase.from('vista_progreso_cursos')
         .select('*')
@@ -43,9 +50,7 @@ export const CourseService = {
      * Get info of one Course 
      */
     async getCourseInfo(cursoId: number) {
-        if (!user) {
-            throw new Error("Usuario no autenticado. No es posible obtener");
-        }
+        const supabase = createClient();
         
         const { data: courseInfo, error } = await supabase.from('Cursos')
         .select('tecnologia, dificultad, conocimientosPrevios, herramientasRequeridas, tecnologiasExcluidas, systemPrompt')
@@ -109,6 +114,8 @@ export const CourseService = {
         /**
          *  Create Course in Supabase
          */
+        const { user, supabase } = await getAuthenticatedUser();
+        
         const postCourse = async () =>{
 
             const coursePayload = {
@@ -186,6 +193,8 @@ export const CourseService = {
     },
 
     async getTemaryByCourseId(courseId: number) {
+        const supabase = createClient();
+        
         const { data: temaryData, error } = await supabase.from('Cursos').select('esquemaTemario').eq('id', courseId).single();
         if (error) {
             throw new Error(`Error al obtener temario de Curso: ${error.message}`);;
