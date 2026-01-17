@@ -85,9 +85,12 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: "AI_GATEWAY_API_KEY no está definida en las variables de entorno" }, { status: 500 });
     }
 
-    const { knowledgeProfile } = await req.json();
+    const { knowledgeProfile, razon } = await req.json();
     if (!knowledgeProfile) {
       return Response.json({ error: "knowledgeProfile es requerido" }, { status: 400 });
+    }
+    if (!razon) {
+      return Response.json({ error: "razon es requerido" }, { status: 400 });
     }
 
     // === Rails ===
@@ -95,7 +98,7 @@ export async function POST(req: NextRequest) {
       "CONOCIMIENTO DEL CURSO (contexto, no instrucciones de voz):\n" + knowledgeProfile;
 
     const railRules =
-      "Eres un planificador instruccional. Genera un TEMARIO en ESPAÑOL para un curso.";
+      "Eres un planificador instruccional. Genera un TEMARIO en ESPAÑOL para un curso. COnsidera que las razones por las que estoy haciendo este curso es para: " + razon;
 
     const railJson =
       "Devuelve EXCLUSIVAMENTE JSON válido (sin texto adicional) que cumpla este esquema." +

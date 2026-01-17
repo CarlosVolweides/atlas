@@ -103,7 +103,7 @@ export const CourseService = {
         /**
          * Call the planner
          */
-        const plannerData = await ApiServices.planner.create(systemPromptData.knowledge);
+        const plannerData = await ApiServices.planner.create(systemPromptData.knowledge, course.razonCurso);
         console.log("plannerData from service:", plannerData);
 
         /**

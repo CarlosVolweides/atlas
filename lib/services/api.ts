@@ -4,13 +4,13 @@ const llmService = process.env.LLM_SERVICE || "vercelai";
 
 export const ApiServices = {
     planner: {
-        async create(knowledgeProfile: string) {
+        async create(knowledgeProfile: string, razon: string) {
             const response = await fetch(`/api/${llmService}/planner`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ knowledgeProfile }),
+                body: JSON.stringify({ knowledgeProfile, razon }),
             });
             if (!response.ok) {
                 throw new Error('Failed to create plan');
