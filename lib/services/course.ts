@@ -66,7 +66,8 @@ export const CourseService = {
      */
     async createCourse(course: CreateCourseParams) {
 
-        if (process.env.NODE_ENV === 'development') {
+        if (process.env.NEXT_PUBLIC_LLM_ACTIVE && process.env.NEXT_PUBLIC_LLM_ACTIVE === "false") {
+            console.log("Creating course in development mode")
             await new Promise(resolve => setTimeout(resolve, 1000));
             return {
                 id: 3,
@@ -76,7 +77,7 @@ export const CourseService = {
                 razonCurso: course.razonCurso,
             };
         }
-
+        console.log("Creating course in production mode")
         /**
          * Build the role text and focus
          */
