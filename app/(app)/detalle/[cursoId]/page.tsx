@@ -83,14 +83,13 @@ export default function DetalleCursoPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Columna izquierda - Detalles del curso */}
             <div
-              className="rounded-lg p-6 flex flex-col h-full"
+              className="rounded-lg p-6 flex flex-col"
               style={{ 
                 background: 'rgba(38, 36, 34, 0.95)', 
                 backdropFilter: 'blur(20px)',
                 borderColor: '#00A3E2',
                 borderWidth: '1px',
-                borderStyle: 'solid',
-                minHeight: '600px'
+                borderStyle: 'solid'
               }}
             >
             {/* Header del curso */}
@@ -115,9 +114,9 @@ export default function DetalleCursoPage() {
               </div>
             </div>
 
-            {/* Contenido scrolleable */}
+            {/* Contenido */}
             <div 
-              className="flex-1 overflow-y-auto py-2 pr-2 mb-6"
+              className="py-2 pr-2 mb-6 max-h-[500px] overflow-y-auto"
               style={{
                 scrollbarWidth: 'thin',
                 scrollbarColor: '#00A3E2 rgba(255, 255, 255, 0.1)'

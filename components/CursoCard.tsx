@@ -48,15 +48,16 @@ export function CursoCard({ nombre, porcentaje, tecnologias, dificultad, onEdit,
   
   return (
     <Card 
-      className="overflow-hidden transition-all hover:scale-105 cursor-pointer"
+      className="overflow-hidden transition-all hover:scale-105 cursor-pointer h-full flex flex-col"
       style={{ 
         background: 'rgba(38, 36, 34, 0.6)', 
         backdropFilter: 'blur(10px)',
         borderColor: '#00A3E2',
-        borderWidth: '1px'
+        borderWidth: '1px',
+        minHeight: '220px'
       }}
     >
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-3 flex-shrink-0">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-3 flex-1 min-w-0">
             <div 
@@ -138,9 +139,9 @@ export function CursoCard({ nombre, porcentaje, tecnologias, dificultad, onEdit,
         </div>
       </CardHeader>
       
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 flex-1 flex flex-col">
         {/* Porcentaje completado */}
-        <div className="space-y-2">
+        <div className="space-y-2 flex-shrink-0">
           <div className="flex items-center justify-between">
             <span className="text-sm" style={{ color: '#ffffff' }}>
               Progreso
@@ -157,21 +158,23 @@ export function CursoCard({ nombre, porcentaje, tecnologias, dificultad, onEdit,
         </div>
 
         {/* Tecnologías */}
-        <div className="flex flex-wrap gap-2">
-          {tecnologias?.map((tech, index) => (
-            <Badge
-              key={index}
-              variant="outline"
-              className="text-xs"
-              style={{
-                background: 'rgba(255, 255, 255, 0.2)',
-                borderColor: '#ffffff',
-                color: '#ffffff'
-              }}
-            >
-              {tech}
-            </Badge>
-          ))}
+        <div className="flex flex-wrap gap-2 flex-1 items-start min-h-[24px]">
+          {tecnologias && tecnologias.length > 0 && (
+            tecnologias.map((tech, index) => (
+              <Badge
+                key={index}
+                variant="outline"
+                className="text-xs"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  borderColor: '#ffffff',
+                  color: '#ffffff'
+                }}
+              >
+                {tech}
+              </Badge>
+            ))
+          )}
         </div>
       </CardContent>
     </Card>
