@@ -16,11 +16,11 @@ export const useTemary = (courseId: number, options?: { enabled?: boolean }) => 
     });
 }
 
-export const useCourses = () => {
-    return useQuery<CursoCardInfo[]>({
-        queryKey: ['courses'],
+export const useCourses = (page: number = 1, limit: number = 9) => {
+    return useQuery<{ courses: CursoCardInfo[]; total: number }>({
+        queryKey: ['courses', page, limit],
         queryFn: async () => { 
-            const data = await CourseService.getCourses();
+            const data = await CourseService.getCourses(page, limit);
             return data;
         }
     });

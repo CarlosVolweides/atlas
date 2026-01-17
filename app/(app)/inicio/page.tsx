@@ -14,6 +14,7 @@ import { useLogout } from '@/hooks/useAccount';
 import { useCourses, useCreateCourse } from '@/hooks/useCourse';
 import { TemaryModal } from '@/components/TemaryModal';
 import { CursoDetalleModal } from '@/components/CursoDetalleModal';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 
 
 export default function InicioScreen() {
@@ -26,11 +27,20 @@ export default function InicioScreen() {
   const [editandoIndex, setEditandoIndex] = useState<number | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const limit = 9;
   const router = useRouter();
   const { mutate: logout } = useLogout();
-  const { data: cursosData } = useCourses();
+  const { data: cursosData } = useCourses(currentPage, limit);
   console.log("CursoData",cursosData)
   const createCourseMutation = useCreateCourse();
+  
+  const totalPages = cursosData ? Math.ceil(cursosData.total / limit) : 1;
+  
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const handleLogout = () => {
     logout();
@@ -69,6 +79,7 @@ export default function InicioScreen() {
         if (courseId) {
           setCreatedCourseId(courseId);
           setIsTemaryModalOpen(true);
+          setCurrentPage(1); // Reset to first page to see the new course
         }
       },
       onError: () => {
@@ -169,8 +180,20 @@ export default function InicioScreen() {
       {/* Contenido principal */}
       <div className="flex-1 overflow-y-auto px-8 py-6">
         <div className="max-w-7xl mx-auto">
-          <h2 className="mb-6 text-3xl" style={{ color: '#ffffff' }}>
+          <h2 className="mb-6 text-3xl flex items-center gap-3" style={{ color: '#ffffff' }}>
             Mis Cursos
+            {cursosData && (
+              <span 
+                className="text-lg px-3 py-1 rounded-full"
+                style={{ 
+                  background: 'rgba(0, 163, 226, 0.2)', 
+                  border: '1px solid rgba(0, 163, 226, 0.5)',
+                  color: '#00A3E2'
+                }}
+              >
+                {cursosData.total}
+              </span>
+            )}
           </h2>
           
           {/* Card de Crear Curso */}
@@ -200,8 +223,8 @@ export default function InicioScreen() {
           
           {/* Grid de 3 columnas */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {cursosData?.map((curso, index) => (
-              <div key={index} onClick={() => setSelectedCourseId(curso.id)}>
+            {cursosData?.courses?.map((curso, index) => (
+              <div key={curso.id} onClick={() => setSelectedCourseId(curso.id)}>
                 <CursoCard                  
                   nombre={curso.tecnologia}
                   porcentaje={curso.progreso}
@@ -213,6 +236,104 @@ export default function InicioScreen() {
               </div>
             ))}
           </div>
+          
+          {/* Paginación */}
+          {totalPages > 1 && (
+            <div className="mt-8">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious 
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (currentPage > 1) {
+                          handlePageChange(currentPage - 1);
+                        }
+                      }}
+                      className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                    />
+                  </PaginationItem>
+                  
+                  {(() => {
+                    const pages: (number | string)[] = [];
+                    const showEllipsis = totalPages > 7;
+                    
+                    if (!showEllipsis) {
+                      // Show all pages if 7 or fewer
+                      for (let i = 1; i <= totalPages; i++) {
+                        pages.push(i);
+                      }
+                    } else {
+                      // Always show first page
+                      pages.push(1);
+                      
+                      if (currentPage <= 4) {
+                        // Near the start: 1 2 3 4 5 ... last
+                        for (let i = 2; i <= 5; i++) {
+                          pages.push(i);
+                        }
+                        pages.push('ellipsis');
+                        pages.push(totalPages);
+                      } else if (currentPage >= totalPages - 3) {
+                        // Near the end: 1 ... (n-4) (n-3) (n-2) (n-1) n
+                        pages.push('ellipsis');
+                        for (let i = totalPages - 4; i <= totalPages; i++) {
+                          pages.push(i);
+                        }
+                      } else {
+                        // In the middle: 1 ... (current-1) current (current+1) ... last
+                        pages.push('ellipsis');
+                        pages.push(currentPage - 1);
+                        pages.push(currentPage);
+                        pages.push(currentPage + 1);
+                        pages.push('ellipsis');
+                        pages.push(totalPages);
+                      }
+                    }
+                    
+                    return pages.map((page, index) => {
+                      if (page === 'ellipsis') {
+                        return (
+                          <PaginationItem key={`ellipsis-${index}`}>
+                            <span className="px-2">...</span>
+                          </PaginationItem>
+                        );
+                      }
+                      return (
+                        <PaginationItem key={page}>
+                          <PaginationLink
+                            href="#"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handlePageChange(page as number);
+                            }}
+                            isActive={currentPage === page}
+                            className="cursor-pointer"
+                          >
+                            {page}
+                          </PaginationLink>
+                        </PaginationItem>
+                      );
+                    });
+                  })()}
+                  
+                  <PaginationItem>
+                    <PaginationNext 
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (currentPage < totalPages) {
+                          handlePageChange(currentPage + 1);
+                        }
+                      }}
+                      className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
         </div>
       </div>
       <CrearCursoModal 

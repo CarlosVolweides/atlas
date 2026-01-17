@@ -24,15 +24,33 @@ async function getAuthenticatedUser() {
 export const CourseService = {
 
     /**
-     * Get all courses
-     * @returns The data of the courses
+     * Get all courses with pagination
+     * @param page - Page number (default: 1)
+     * @param limit - Number of courses per page (default: 9)
+     * @returns Object with courses and total count
      */
-    async getCourses() {
+    async getCourses(page: number = 1, limit: number = 9) {
         const { user, supabase } = await getAuthenticatedUser();
 
+        const from = (page - 1) * limit;
+        const to = from + limit - 1;
+
+        // Get total count
+        const { count, error: countError } = await supabase
+            .from('vista_progreso_cursos')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', user.id);
+        
+        if (countError) {
+            throw countError;
+        }
+
+        // Get paginated data
         const { data, error } = await supabase.from('vista_progreso_cursos')
         .select('*')
-        .eq('user_id', user.id);
+        .eq('user_id', user.id)
+        .range(from, to);
+        
         if (error) {
             throw error;
         }
@@ -62,7 +80,11 @@ export const CourseService = {
             course.dificultad = courseId ? dificultadesMap[courseId] || null : null;
             return course
         });
-        return dataCourses;
+        
+        return {
+            courses: dataCourses,
+            total: count || 0
+        };
     },
 
     /** 
