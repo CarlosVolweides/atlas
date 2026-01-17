@@ -10,13 +10,42 @@ interface CursoCardProps {
   nombre: string;
   porcentaje: number;
   tecnologias: string[];
+  dificultad?: string | null;
   onEdit?: () => void;
   onDelete?: () => void;
 }
 
 
-export function CursoCard({ nombre, porcentaje, tecnologias, onEdit, onDelete }: CursoCardProps) {
+const getDificultadColor = (dificultad?: string | null) => {
+  if (!dificultad) return { bg: 'rgba(255, 255, 255, 0.2)', text: '#ffffff' };
+  const lower = dificultad.toLowerCase();
+  if (lower === 'principiante' || lower === 'beginner') {
+    return { bg: 'rgba(34, 197, 94, 0.3)', text: '#22c55e', border: '#22c55e' };
+  }
+  if (lower === 'intermedio' || lower === 'intermediate') {
+    return { bg: 'rgba(234, 179, 8, 0.3)', text: '#eab308', border: '#eab308' };
+  }
+  if (lower === 'avanzado' || lower === 'advanced' || lower === 'experto' || lower === 'expert') {
+    return { bg: 'rgba(239, 68, 68, 0.3)', text: '#ef4444', border: '#ef4444' };
+  }
+  return { bg: 'rgba(255, 255, 255, 0.2)', text: '#ffffff', border: '#ffffff' };
+};
+
+const getDificultadLabel = (dificultad?: string | null) => {
+  if (!dificultad) return '';
+  const lower = dificultad.toLowerCase();
+  if (lower === 'principiante' || lower === 'beginner') return 'Principiante';
+  if (lower === 'intermedio' || lower === 'intermediate') return 'Intermedio';
+  if (lower === 'avanzado' || lower === 'advanced') return 'Avanzado';
+  if (lower === 'experto' || lower === 'expert') return 'Experto';
+  return dificultad.charAt(0).toUpperCase() + dificultad.slice(1);
+};
+
+export function CursoCard({ nombre, porcentaje, tecnologias, dificultad, onEdit, onDelete }: CursoCardProps) {
   const Icon = technologyIcons[nombre.toLowerCase() as string]
+  const dificultadStyle = getDificultadColor(dificultad);
+  const dificultadLabel = getDificultadLabel(dificultad);
+  
   return (
     <Card 
       className="overflow-hidden transition-all hover:scale-105 cursor-pointer"
@@ -40,12 +69,27 @@ export function CursoCard({ nombre, porcentaje, tecnologias, onEdit, onDelete }:
               
             </div>
             <div className="flex-1 min-w-0">
-              <h3 
-                className="truncate" 
-                style={{ color: '#ffffff' }}
-              >
-                {nombre}
-              </h3>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 
+                  className="truncate" 
+                  style={{ color: '#ffffff' }}
+                >
+                  {nombre}
+                </h3>
+                {dificultadLabel && (
+                  <Badge
+                    variant="outline"
+                    className="text-xs font-semibold px-2 py-0.5"
+                    style={{
+                      background: dificultadStyle.bg,
+                      borderColor: dificultadStyle.border,
+                      color: dificultadStyle.text
+                    }}
+                  >
+                    {dificultadLabel}
+                  </Badge>
+                )}
+              </div>
             </div>
           </div>
           

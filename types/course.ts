@@ -23,6 +23,7 @@ export interface CursoCardInfo {
     tecnologia: string;
     progreso: number;
     herramientasRequeridas: string[];
+    dificultad?: string | null;
 }
 
 export interface CreateCourseParams {

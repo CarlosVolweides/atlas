@@ -206,6 +206,7 @@ export default function InicioScreen() {
                   nombre={curso.tecnologia}
                   porcentaje={curso.progreso}
                   tecnologias={curso.herramientasRequeridas}
+                  dificultad={curso.dificultad}
                   onEdit={() => handleEditarCurso(index)}
                   onDelete={() => handleEliminarCurso(index)}
                 />

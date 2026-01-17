@@ -36,9 +36,30 @@ export const CourseService = {
         if (error) {
             throw error;
         }
+        
+        // Obtener las dificultades de los cursos
+        const courseIds = data?.map(course => course.id || course.curso_id).filter(Boolean) || [];
+        let dificultadesMap: Record<number, string | null> = {};
+        
+        if (courseIds.length > 0) {
+            const { data: cursosData, error: cursosError } = await supabase
+                .from('Cursos')
+                .select('id, dificultad')
+                .in('id', courseIds);
+            
+            if (!cursosError && cursosData) {
+                dificultadesMap = cursosData.reduce((acc, curso) => {
+                    acc[curso.id] = curso.dificultad;
+                    return acc;
+                }, {} as Record<number, string | null>);
+            }
+        }
+        
         const dataCourses = data
         dataCourses.forEach(course => {
             course.progreso = Math.round(course.temas_completados/course.total_temas * 100);
+            const courseId = course.id || course.curso_id;
+            course.dificultad = courseId ? dificultadesMap[courseId] || null : null;
             return course
         });
         return dataCourses;
