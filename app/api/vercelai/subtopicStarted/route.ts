@@ -4,7 +4,7 @@ export const runtime = "nodejs";
 
 const GATEWAY_BASE = process.env.AI_GATEWAY_URL;
 const GATEWAY_KEY = process.env.AI_GATEWAY_API_KEY;
-const MODEL = process.env.AI_MODEL ?? "google/gemini-3-flash";
+const MODEL = process.env.NEXT_PUBLIC_LLM_MODEL ?? "google/gemini-3-flash";
 
 // JSON Schema estricto para la salida del tutor
 const lessonSchema = {
