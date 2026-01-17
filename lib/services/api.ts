@@ -1,6 +1,6 @@
 import { ContextService } from "./context";
 
-const llmService = process.env.LLM_SERVICE || "vercelai";
+const llmService = process.env.NEXT_PUBLIC_LLM_SERVICE || "vercelai";
 
 export const ApiServices = {
     planner: {

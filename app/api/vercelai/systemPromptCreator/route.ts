@@ -4,7 +4,7 @@ export const runtime = "nodejs";
 
 const GATEWAY_BASE = process.env.AI_GATEWAY_URL;
 const GATEWAY_KEY = process.env.AI_GATEWAY_API_KEY;
-const MODEL = process.env.AI_MODEL ?? "openai/gpt-4o-mini";
+const MODEL = process.env.NEXT_PUBLIC_LLM_MODEL ?? "google/gemini-3-flash";
 
 export async function POST(req: NextRequest) {
   try {
@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
           { role: "user", content: user }
         ],
         temperature: 0.2,
-        max_tokens: 700
+        max_tokens: 1200
       })
     });
 
