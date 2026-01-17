@@ -44,7 +44,7 @@ export interface PlannerModules {
 export interface Module {
     order: number;
     title: string;
-    objetive: string;
+    objective: string;
     subtopics: Subtema[];
 }
 
@@ -77,7 +77,7 @@ export interface SubtopicTemaryI {
 export interface ModuleTemaryI {
   order: number;
   title: string;
-  objetive?: string;
+  objective?: string;
   subtopics: SubtopicTemaryI[];
 }
 

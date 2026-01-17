@@ -1,3 +1,5 @@
+import { TemaryInterface } from './course';
+
 export interface CursoDB {
   id: number;
   tecnologia: string;
@@ -7,7 +9,7 @@ export interface CursoDB {
   herramientasRequeridas: string[] | null;
   tecnologiasExcluidas: string[] | null;
   systemPrompt: string | null;
-  esquemaTemario: any | null;
+  esquemaTemario: TemaryInterface | null;
   user_id: string;
   created_at: string;
 }

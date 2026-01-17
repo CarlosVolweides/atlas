@@ -18,7 +18,7 @@ import {
   FormLabel,
   FormMessage,
 } from './ui/form';
-import { BookOpen } from 'lucide-react';
+import { BookOpen, Plus, X } from 'lucide-react';
 
 const crearCursoSchema = z.object({
   tecnologiaPrincipal: z.string().min(1, 'La tecnología principal es requerida'),
@@ -26,9 +26,9 @@ const crearCursoSchema = z.object({
     message: 'El nivel de dificultad es requerido',
   }),
   razonCurso: z.string().min(1, 'Debes explicar para qué deseas hacer este curso'),
-  indispensables: z.string().optional(),
-  conocimientosPrevios: z.string().optional(),
-  tecnologiasFueraAlcance: z.string().optional(),
+  indispensables: z.array(z.string()).optional(),
+  conocimientosPrevios: z.array(z.string()).optional(),
+  tecnologiasFueraAlcance: z.array(z.string()).optional(),
 });
 
 type CrearCursoFormData = z.infer<typeof crearCursoSchema>;
@@ -40,9 +40,9 @@ interface CrearCursoModalProps {
     tecnologiaPrincipal: string; 
     dificultad: string;
     razonCurso: string;
-    indispensables?: string; 
-    conocimientosPrevios?: string; 
-    tecnologiasFueraAlcance?: string;
+    indispensables?: string[]; 
+    conocimientosPrevios?: string[]; 
+    tecnologiasFueraAlcance?: string[];
   }) => void;
 }
 
@@ -55,9 +55,9 @@ export function CrearCursoModal({ open, onOpenChange, onCrearCurso }: CrearCurso
       tecnologiaPrincipal: '',
       dificultad: undefined as any,
       razonCurso: '',
-      indispensables: '',
-      conocimientosPrevios: '',
-      tecnologiasFueraAlcance: '',
+      indispensables: [],
+      conocimientosPrevios: [],
+      tecnologiasFueraAlcance: [],
     },
   });
 
@@ -71,9 +71,9 @@ export function CrearCursoModal({ open, onOpenChange, onCrearCurso }: CrearCurso
   const handleConfiguracionAvanzadaChange = (checked: boolean) => {
     setConfiguracionAvanzada(checked);
     if (!checked) {
-      form.setValue('indispensables', '');
-      form.setValue('conocimientosPrevios', '');
-      form.setValue('tecnologiasFueraAlcance', '');
+      form.setValue('indispensables', []);
+      form.setValue('conocimientosPrevios', []);
+      form.setValue('tecnologiasFueraAlcance', []);
     }
   };
 
@@ -82,9 +82,9 @@ export function CrearCursoModal({ open, onOpenChange, onCrearCurso }: CrearCurso
       tecnologiaPrincipal: data.tecnologiaPrincipal,
       dificultad: data.dificultad,
       razonCurso: data.razonCurso,
-      indispensables: data.indispensables || undefined,
-      conocimientosPrevios: data.conocimientosPrevios || undefined,
-      tecnologiasFueraAlcance: data.tecnologiasFueraAlcance || undefined,
+      indispensables: data.indispensables && data.indispensables.length > 0 ? data.indispensables : undefined,
+      conocimientosPrevios: data.conocimientosPrevios && data.conocimientosPrevios.length > 0 ? data.conocimientosPrevios : undefined,
+      tecnologiasFueraAlcance: data.tecnologiasFueraAlcance && data.tecnologiasFueraAlcance.length > 0 ? data.tecnologiasFueraAlcance : undefined,
     });
     
     form.reset();
@@ -263,93 +263,288 @@ export function CrearCursoModal({ open, onOpenChange, onCrearCurso }: CrearCurso
             <FormField
               control={form.control}
               name="indispensables"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-xs sm:text-sm" style={{ color: '#ffffff' }}>
-                    Indispensables para este Curso (Opcional)
-                  </FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Ej: Manejo de estados, API REST, CRUD, etc."
-                      rows={2}
-                      className="text-sm sm:text-base"
-                      style={{ 
-                        background: 'rgba(255, 255, 255, 0.1)', 
-                        borderColor: '#00A3E2',
-                        color: '#ffffff',
-                        resize: 'none'
-                      }}
-                      {...field}
-                    />
-                  </FormControl>
-                  <p className="text-xs" style={{ color: '#999999' }}>
-                    Lista las herramientas, frameworks o librerías que deben incluirse en el curso
-                  </p>
-                  <FormMessage />
-                </FormItem>
-              )}
+              render={({ field }) => {
+                const [inputValue, setInputValue] = useState('');
+                const values = field.value || [];
+
+                const handleAdd = () => {
+                  if (inputValue.trim()) {
+                    field.onChange([...values, inputValue.trim()]);
+                    setInputValue('');
+                  }
+                };
+
+                const handleRemove = (index: number) => {
+                  field.onChange(values.filter((_, i) => i !== index));
+                };
+
+                return (
+                  <FormItem>
+                    <FormLabel className="text-xs sm:text-sm" style={{ color: '#ffffff' }}>
+                      Indispensables para este Curso (Opcional)
+                    </FormLabel>
+                    <FormControl>
+                      <div className="space-y-2">
+                        <div className="flex gap-2">
+                          <Input
+                            type="text"
+                            placeholder="Ej: Manejo de estados, API REST, CRUD, etc."
+                            value={inputValue}
+                            onChange={(e) => setInputValue(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleAdd();
+                              }
+                            }}
+                            className="text-sm sm:text-base"
+                            style={{ 
+                              background: 'rgba(255, 255, 255, 0.1)', 
+                              borderColor: '#00A3E2',
+                              color: '#ffffff'
+                            }}
+                          />
+                          <Button
+                            type="button"
+                            onClick={handleAdd}
+                            disabled={!inputValue.trim()}
+                            className="px-3"
+                            style={{ 
+                              background: inputValue.trim() ? '#00A3E2' : 'rgba(0, 163, 226, 0.5)',
+                              color: '#ffffff',
+                              border: 'none'
+                            }}
+                          >
+                            <Plus className="w-4 h-4" />
+                          </Button>
+                        </div>
+                        {values.length > 0 && (
+                          <div className="flex flex-wrap gap-2">
+                            {values.map((value, index) => (
+                              <div
+                                key={index}
+                                className="flex items-center gap-1 px-2 py-1 rounded"
+                                style={{
+                                  background: 'rgba(0, 163, 226, 0.2)',
+                                  border: '1px solid #00A3E2'
+                                }}
+                              >
+                                <span className="text-xs sm:text-sm" style={{ color: '#ffffff' }}>
+                                  {value}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemove(index)}
+                                  className="ml-1 hover:opacity-70"
+                                  style={{ color: '#ffffff' }}
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </FormControl>
+                    <p className="text-xs" style={{ color: '#999999' }}>
+                      Lista las herramientas, frameworks o librerías que deben incluirse en el curso
+                    </p>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
             />
 
             {/* Campo Conocimientos Previos */}
             <FormField
               control={form.control}
               name="conocimientosPrevios"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-xs sm:text-sm" style={{ color: '#ffffff' }}>
-                    Conocimientos Previos del Usuario (Opcional)
-                  </FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Ej: HTML básico, CSS intermedio, JavaScript básico, programación orientada a objetos, etc."
-                      rows={3}
-                      className="text-sm sm:text-base"
-                      style={{ 
-                        background: 'rgba(255, 255, 255, 0.1)', 
-                        borderColor: '#00A3E2',
-                        color: '#ffffff',
-                        resize: 'none'
-                      }}
-                      {...field}
-                    />
-                  </FormControl>
-                  <p className="text-xs" style={{ color: '#999999' }}>
-                    Describe tu nivel de experiencia y qué conocimientos ya tienes sobre este tema
-                  </p>
-                  <FormMessage />
-                </FormItem>
-              )}
+              render={({ field }) => {
+                const [inputValue, setInputValue] = useState('');
+                const values = field.value || [];
+
+                const handleAdd = () => {
+                  if (inputValue.trim()) {
+                    field.onChange([...values, inputValue.trim()]);
+                    setInputValue('');
+                  }
+                };
+
+                const handleRemove = (index: number) => {
+                  field.onChange(values.filter((_, i) => i !== index));
+                };
+
+                return (
+                  <FormItem>
+                    <FormLabel className="text-xs sm:text-sm" style={{ color: '#ffffff' }}>
+                      Conocimientos Previos del Usuario (Opcional)
+                    </FormLabel>
+                    <FormControl>
+                      <div className="space-y-2">
+                        <div className="flex gap-2">
+                          <Input
+                            type="text"
+                            placeholder="Ej: HTML básico, CSS intermedio, JavaScript básico, etc."
+                            value={inputValue}
+                            onChange={(e) => setInputValue(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleAdd();
+                              }
+                            }}
+                            className="text-sm sm:text-base"
+                            style={{ 
+                              background: 'rgba(255, 255, 255, 0.1)', 
+                              borderColor: '#00A3E2',
+                              color: '#ffffff'
+                            }}
+                          />
+                          <Button
+                            type="button"
+                            onClick={handleAdd}
+                            disabled={!inputValue.trim()}
+                            className="px-3"
+                            style={{ 
+                              background: inputValue.trim() ? '#00A3E2' : 'rgba(0, 163, 226, 0.5)',
+                              color: '#ffffff',
+                              border: 'none'
+                            }}
+                          >
+                            <Plus className="w-4 h-4" />
+                          </Button>
+                        </div>
+                        {values.length > 0 && (
+                          <div className="flex flex-wrap gap-2">
+                            {values.map((value, index) => (
+                              <div
+                                key={index}
+                                className="flex items-center gap-1 px-2 py-1 rounded"
+                                style={{
+                                  background: 'rgba(0, 163, 226, 0.2)',
+                                  border: '1px solid #00A3E2'
+                                }}
+                              >
+                                <span className="text-xs sm:text-sm" style={{ color: '#ffffff' }}>
+                                  {value}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemove(index)}
+                                  className="ml-1 hover:opacity-70"
+                                  style={{ color: '#ffffff' }}
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </FormControl>
+                    <p className="text-xs" style={{ color: '#999999' }}>
+                      Describe tu nivel de experiencia y qué conocimientos ya tienes sobre este tema
+                    </p>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
             />
 
                 {/* Campo Tecnologías Fuera del Alcance */}
                 <FormField
                   control={form.control}
                   name="tecnologiasFueraAlcance"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs sm:text-sm" style={{ color: '#ffffff' }}>
-                        Tecnologías Fuera del Alcance para este Curso (Opcional)
-                      </FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Ej: Pruebas unitarias, typescript, etc."
-                          rows={2}
-                          className="text-sm sm:text-base"
-                          style={{ 
-                            background: 'rgba(255, 255, 255, 0.1)', 
-                            borderColor: '#00A3E2',
-                            color: '#ffffff',
-                            resize: 'none'
-                          }}
-                          {...field}
-                        />
-                      </FormControl>
-                      <p className="text-xs" style={{ color: '#999999' }}>
-                        Especifica tecnologías, herramientas o conceptos que NO deben incluirse en el curso
-                      </p>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  render={({ field }) => {
+                    const [inputValue, setInputValue] = useState('');
+                    const values = field.value || [];
+
+                    const handleAdd = () => {
+                      if (inputValue.trim()) {
+                        field.onChange([...values, inputValue.trim()]);
+                        setInputValue('');
+                      }
+                    };
+
+                    const handleRemove = (index: number) => {
+                      field.onChange(values.filter((_, i) => i !== index));
+                    };
+
+                    return (
+                      <FormItem>
+                        <FormLabel className="text-xs sm:text-sm" style={{ color: '#ffffff' }}>
+                          Tecnologías Fuera del Alcance para este Curso (Opcional)
+                        </FormLabel>
+                        <FormControl>
+                          <div className="space-y-2">
+                            <div className="flex gap-2">
+                              <Input
+                                type="text"
+                                placeholder="Ej: Pruebas unitarias, typescript, etc."
+                                value={inputValue}
+                                onChange={(e) => setInputValue(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    handleAdd();
+                                  }
+                                }}
+                                className="text-sm sm:text-base"
+                                style={{ 
+                                  background: 'rgba(255, 255, 255, 0.1)', 
+                                  borderColor: '#00A3E2',
+                                  color: '#ffffff'
+                                }}
+                              />
+                              <Button
+                                type="button"
+                                onClick={handleAdd}
+                                disabled={!inputValue.trim()}
+                                className="px-3"
+                                style={{ 
+                                  background: inputValue.trim() ? '#00A3E2' : 'rgba(0, 163, 226, 0.5)',
+                                  color: '#ffffff',
+                                  border: 'none'
+                                }}
+                              >
+                                <Plus className="w-4 h-4" />
+                              </Button>
+                            </div>
+                            {values.length > 0 && (
+                              <div className="flex flex-wrap gap-2">
+                                {values.map((value, index) => (
+                                  <div
+                                    key={index}
+                                    className="flex items-center gap-1 px-2 py-1 rounded"
+                                    style={{
+                                      background: 'rgba(0, 163, 226, 0.2)',
+                                      border: '1px solid #00A3E2'
+                                    }}
+                                  >
+                                    <span className="text-xs sm:text-sm" style={{ color: '#ffffff' }}>
+                                      {value}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRemove(index)}
+                                      className="ml-1 hover:opacity-70"
+                                      style={{ color: '#ffffff' }}
+                                    >
+                                      <X className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </FormControl>
+                        <p className="text-xs" style={{ color: '#999999' }}>
+                          Especifica tecnologías, herramientas o conceptos que NO deben incluirse en el curso
+                        </p>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
                 />
               </>
             )}

@@ -1,20 +1,16 @@
 "use client";
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { BookOpen, Search, Settings, LogOut, Plus, User } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Plus } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { CrearCursoModal } from '@/components/CrearCursoModal';
 import { ChargeModal } from '@/components/ChargeModal';
 import { CursoCard } from '@/components/CursoCard';
 import { CursoCardI } from '@/types/course';
-import { cursosInicialesEjemplo } from './mocks';
-import { useLogout } from '@/hooks/useAccount';
 import { useCourses, useCreateCourse } from '@/hooks/useCourse';
 import { TemaryModal } from '@/components/TemaryModal';
-import { CursoDetalleModal } from '@/components/CursoDetalleModal';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
+import { Header } from '@/components/Header';
 
 
 export default function InicioScreen() {
@@ -23,14 +19,12 @@ export default function InicioScreen() {
   const [isChargeModalOpen, setIsChargeModalOpen] = useState(false);
   const [isTemaryModalOpen, setIsTemaryModalOpen] = useState(false);
   const [createdCourseId, setCreatedCourseId] = useState<number | null>(null);
-  const [cursos, setCursos] = useState<CursoCardI[]>(cursosInicialesEjemplo);
+  const [cursos, setCursos] = useState<CursoCardI[]>([]);
   const [editandoIndex, setEditandoIndex] = useState<number | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const limit = 9;
   const router = useRouter();
-  const { mutate: logout } = useLogout();
   const { data: cursosData } = useCourses(currentPage, limit);
   console.log("CursoData",cursosData)
   const createCourseMutation = useCreateCourse();
@@ -42,11 +36,8 @@ export default function InicioScreen() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleLogout = () => {
-    logout();
-    setTimeout(() => {
-      router.push('/');
-    }, 1000);
+  const handleSettingsClick = () => {
+    console.log("si hay cursos:", cursosData);
   };
 
   // Calcular porcentaje basado en subtemas completados
@@ -59,9 +50,9 @@ export default function InicioScreen() {
   const handleCrearCurso = (datos: { 
     tecnologiaPrincipal: string;
     razonCurso: string;
-    indispensables?: string | undefined;
-    conocimientosPrevios?: string | undefined;
-    tecnologiasFueraAlcance?: string | undefined;
+    indispensables?: string[] | undefined;
+    conocimientosPrevios?: string[] | undefined;
+    tecnologiasFueraAlcance?: string[] | undefined;
     dificultad: string;
   }) => {
     setIsChargeModalOpen(true);
@@ -69,9 +60,9 @@ export default function InicioScreen() {
       tecnologiaPrincipal: datos.tecnologiaPrincipal,
       dificultad: datos.dificultad,
       razonCurso: datos.razonCurso,
-      requiredTools: datos.indispensables?.split(','),
-      priorKnowledge: datos.conocimientosPrevios?.split(','),
-      outOfScope: datos.tecnologiasFueraAlcance?.split(','),
+      requiredTools: datos.indispensables,
+      priorKnowledge: datos.conocimientosPrevios,
+      outOfScope: datos.tecnologiasFueraAlcance,
     }, {
       onSuccess: (data: any) => {
         setIsChargeModalOpen(false);
@@ -116,66 +107,11 @@ export default function InicioScreen() {
       className="min-h-screen max-h-screen flex flex-col overflow-hidden" 
       style={{ background: 'linear-gradient(135deg, #001a33 0%, #004d66 50%, #00A3E2 100%)' }}
     >
-      {/* Header */}
-      <header className="w-full px-8 py-4 flex items-center justify-between" style={{ background: 'rgba(0, 0, 0, 0.3)', backdropFilter: 'blur(10px)', borderBottom: '1px solid rgba(0, 163, 226, 0.2)' }}>
-        {/* Logo - Izquierda */}
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #00A3E2 0%, #006b9a 100%)' }}>
-            <BookOpen className="w-4 h-4 text-white" />
-          </div>
-          <span className="text-xl" style={{ color: '#ffffff' }}>Atlas</span>
-        </div>
-
-        {/* Barra de búsqueda - Centro */}
-        <div className="flex-1 max-w-2xl mx-8">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" style={{ color: '#999999' }} />
-            <Input
-              type="text"
-              placeholder="Buscar temas, cursos o planes de estudio..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-10"
-              style={{ 
-                background: '#23303F', 
-                borderColor: '#00A3E2',
-                color: '#ffffff'
-              }}
-            />
-          </div>
-        </div>
-
-        {/* Avatar con dropdown - Derecha */}
-        <DropdownMenu>
-          <DropdownMenuTrigger className="focus:outline-none">
-            <div className="w-10 h-10 rounded-full overflow-hidden cursor-pointer ring-2 ring-cyan-400 hover:ring-cyan-300 transition-all">
-              <User className="w-10 h-10 text-white" />
-            </div>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48" style={{ background: '#262422', borderColor: '#00A3E2' }}>
-            <DropdownMenuLabel className="text-sm font-semibold text-center" style={{ color: '#ffffff' }}>
-              {'Usuario'}
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem 
-              className="cursor-pointer" 
-              style={{ color: '#ffffff' }}
-              onClick={() => {console.log("si hay cursos:", cursosData);}}
-            >
-              <Settings className="w-4 h-4 mr-2" />
-              Configuración
-            </DropdownMenuItem>
-            <DropdownMenuItem 
-              className="cursor-pointer" 
-              style={{ color: '#ffffff' }}
-              onClick={handleLogout}
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Cerrar sesión
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </header>
+      <Header 
+        searchValue={searchQuery}
+        onSearchChange={setSearchQuery}
+        onSettingsClick={handleSettingsClick}
+      />
 
       {/* Contenido principal */}
       <div className="flex-1 overflow-y-auto px-8 py-6">
@@ -224,7 +160,7 @@ export default function InicioScreen() {
           {/* Grid de 3 columnas */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {cursosData?.courses?.map((curso, index) => (
-              <div key={curso.id} onClick={() => setSelectedCourseId(curso.id)}>
+              <div key={curso.id} onClick={() => router.push(`/detalle/${curso.id}`)}>
                 <CursoCard                  
                   nombre={curso.tecnologia}
                   porcentaje={curso.progreso}
@@ -350,12 +286,6 @@ export default function InicioScreen() {
         open={isTemaryModalOpen}
         onOpenChange={setIsTemaryModalOpen}
         temaryid={createdCourseId || null}
-      />
-
-      <CursoDetalleModal 
-        open={selectedCourseId !== null}
-        onOpenChange={(open) => !open && setSelectedCourseId(null)}
-        courseId={selectedCourseId}
       />
 
     </div>

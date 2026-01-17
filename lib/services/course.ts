@@ -158,14 +158,18 @@ export const CourseService = {
         const { user, supabase } = await getAuthenticatedUser();
         
         const postCourse = async () =>{
+            // Helper para manejar arrays: si existe (incluso vacío), guardarlo; si es undefined, usar null
+            const handleArrayField = (arr: string[] | undefined): string[] | null => {
+                return arr !== undefined ? arr : null;
+            };
 
             const coursePayload = {
                 tecnologia: course.tecnologiaPrincipal,
                 dificultad: course.dificultad,
                 razonCurso: course.razonCurso,
-                herramientasRequeridas: course.requiredTools ?? null,
-                conocimientosPrevios: course.priorKnowledge ?? null,
-                tecnologiasExcluidas: course.outOfScope ?? null,
+                herramientasRequeridas: handleArrayField(course.requiredTools),
+                conocimientosPrevios: handleArrayField(course.priorKnowledge),
+                tecnologiasExcluidas: handleArrayField(course.outOfScope),
                 user_id: user.id,
                 esquemaTemario:
                     typeof plannerData === "string"
