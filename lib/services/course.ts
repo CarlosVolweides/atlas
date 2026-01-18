@@ -55,21 +55,24 @@ export const CourseService = {
             throw error;
         }
         
-        // Obtener las dificultades de los cursos
+        // Obtener las dificultades y created_at de los cursos
         const courseIds = data?.map(course => course.id || course.curso_id).filter(Boolean) || [];
-        let dificultadesMap: Record<number, string | null> = {};
+        let cursosInfoMap: Record<number, { dificultad: string | null; created_at: string | null }> = {};
         
         if (courseIds.length > 0) {
             const { data: cursosData, error: cursosError } = await supabase
                 .from('Cursos')
-                .select('id, dificultad')
+                .select('id, dificultad, created_at')
                 .in('id', courseIds);
             
             if (!cursosError && cursosData) {
-                dificultadesMap = cursosData.reduce((acc, curso) => {
-                    acc[curso.id] = curso.dificultad;
+                cursosInfoMap = cursosData.reduce((acc, curso) => {
+                    acc[curso.id] = {
+                        dificultad: curso.dificultad,
+                        created_at: curso.created_at
+                    };
                     return acc;
-                }, {} as Record<number, string | null>);
+                }, {} as Record<number, { dificultad: string | null; created_at: string | null }>);
             }
         }
         
@@ -77,7 +80,9 @@ export const CourseService = {
         dataCourses.forEach(course => {
             course.progreso = Math.round(course.temas_completados/course.total_temas * 100);
             const courseId = course.id || course.curso_id;
-            course.dificultad = courseId ? dificultadesMap[courseId] || null : null;
+            const cursoInfo = courseId ? cursosInfoMap[courseId] : null;
+            course.dificultad = cursoInfo?.dificultad || null;
+            course.created_at = cursoInfo?.created_at || null;
             return course
         });
         

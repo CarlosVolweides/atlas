@@ -158,14 +158,15 @@ export default function InicioScreen() {
           </Card>
           
           {/* Grid de 3 columnas */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {cursosData?.courses?.map((curso, index) => (
-              <div key={curso.id} onClick={() => router.push(`/detalle/${curso.id}`)} className="h-full">
+              <div key={curso.id} onClick={() => router.push(`/detalle/${curso.id}`)}>
                 <CursoCard                  
                   nombre={curso.tecnologia}
                   porcentaje={curso.progreso}
                   tecnologias={curso.herramientasRequeridas}
                   dificultad={curso.dificultad}
+                  created_at={curso.created_at}
                   onEdit={() => handleEditarCurso(index)}
                   onDelete={() => handleEliminarCurso(index)}
                 />

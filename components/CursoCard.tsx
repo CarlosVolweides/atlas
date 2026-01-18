@@ -1,5 +1,5 @@
 "use client";
-import { BookOpen, MoreVertical, Edit2, Trash2 } from 'lucide-react';
+import { BookOpen, MoreVertical, Edit2, Trash2, Calendar } from 'lucide-react';
 import { Card, CardContent, CardHeader } from './ui/card';
 import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
@@ -11,6 +11,7 @@ interface CursoCardProps {
   porcentaje: number;
   tecnologias: string[];
   dificultad?: string | null;
+  created_at?: string | null;
   onEdit?: () => void;
   onDelete?: () => void;
 }
@@ -41,10 +42,25 @@ const getDificultadLabel = (dificultad?: string | null) => {
   return dificultad.charAt(0).toUpperCase() + dificultad.slice(1);
 };
 
-export function CursoCard({ nombre, porcentaje, tecnologias, dificultad, onEdit, onDelete }: CursoCardProps) {
+const formatDate = (dateString: string | null | undefined) => {
+  if (!dateString) return null;
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('es-ES', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  } catch {
+    return null;
+  }
+};
+
+export function CursoCard({ nombre, porcentaje, tecnologias, dificultad, created_at, onEdit, onDelete }: CursoCardProps) {
   const Icon = technologyIcons[nombre.toLowerCase() as string]
   const dificultadStyle = getDificultadColor(dificultad);
   const dificultadLabel = getDificultadLabel(dificultad);
+  const fechaFormateada = formatDate(created_at);
   
   return (
     <Card 
@@ -160,9 +176,9 @@ export function CursoCard({ nombre, porcentaje, tecnologias, dificultad, onEdit,
         {/* Tecnologías */}
         <div className="flex flex-wrap gap-2 flex-1 items-start min-h-[24px]">
           {tecnologias && tecnologias.length > 0 && (
-            tecnologias.map((tech, index) => (
+            tecnologias.map((tech) => (
               <Badge
-                key={index}
+                key={tech}
                 variant="outline"
                 className="text-xs"
                 style={{
@@ -176,6 +192,16 @@ export function CursoCard({ nombre, porcentaje, tecnologias, dificultad, onEdit,
             ))
           )}
         </div>
+
+        {/* Fecha de creación */}
+        {fechaFormateada && (
+          <div className="flex items-center gap-2 pt-2 border-t" style={{ borderColor: 'rgba(255, 255, 255, 0.1)' }}>
+            <Calendar className="w-3 h-3" style={{ color: '#999999' }} />
+            <span className="text-xs" style={{ color: '#999999' }}>
+              Creado: {fechaFormateada}
+            </span>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
