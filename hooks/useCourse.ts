@@ -83,3 +83,29 @@ export const useUpdateSubtemaEstado = () => {
       SubtopicService.updateSubtopicState(courseId, moduleOrder, subtopicOrder, newState)
   })
 }
+
+export const useUpdateCourse = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async ({
+            courseId,
+            titulo,
+            image
+        }: {
+            courseId: number;
+            titulo: string;
+            image: number | null;
+        }) => {
+            const data = await CourseService.updateCourse(courseId, titulo, image);
+            return data;
+        },
+        onSuccess: (_, variables) => {
+            toast.success('Curso actualizado exitosamente');
+            queryClient.invalidateQueries(['courses']);
+            queryClient.invalidateQueries(['course-info', variables.courseId]);
+        },
+        onError: (error: Error) => {
+            toast.error((error as Error).message);
+        },
+    });
+}

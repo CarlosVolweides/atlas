@@ -113,6 +113,49 @@ export const CourseService = {
     },
 
     /**
+     * Update course title and image
+     * @param courseId - The course ID to update
+     * @param titulo - The new title
+     * @param image - The new image icon ID (can be null)
+     * @returns The updated course data
+     */
+    async updateCourse(courseId: number, titulo: string, image: number | null) {
+        const { user, supabase } = await getAuthenticatedUser();
+
+        // Verify the course belongs to the user
+        const { data: existingCourse, error: checkError } = await supabase
+            .from('Cursos')
+            .select('user_id')
+            .eq('id', courseId)
+            .single();
+
+        if (checkError) {
+            throw new Error(`Error al verificar el curso: ${checkError.message}`);
+        }
+
+        if (existingCourse.user_id !== user.id) {
+            throw new Error('No tienes permiso para editar este curso');
+        }
+
+        // Update the course
+        const { data: updatedCourse, error: updateError } = await supabase
+            .from('Cursos')
+            .update({
+                titulo,
+                image
+            })
+            .eq('id', courseId)
+            .select()
+            .single();
+
+        if (updateError) {
+            throw new Error(`Error al actualizar el curso: ${updateError.message}`);
+        }
+
+        return updatedCourse;
+    },
+
+    /**
      * Create a new course
      * @param course - The course to create
      * @returns The data of the course

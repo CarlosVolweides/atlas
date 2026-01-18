@@ -7,10 +7,12 @@ import { CrearCursoModal } from '@/components/CrearCursoModal';
 import { ChargeModal } from '@/components/ChargeModal';
 import { CursoCard } from '@/components/CursoCard';
 import { CursoCardI } from '@/types/course';
-import { useCourses, useCreateCourse } from '@/hooks/useCourse';
+import { useCourses, useCreateCourse, useUpdateCourse } from '@/hooks/useCourse';
 import { TemaryModal } from '@/components/TemaryModal';
+import { EditarCursoModal } from '@/components/EditarCursoModal';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { Header } from '@/components/Header';
+import { CursoCardInfo } from '@/types/course';
 
 
 export default function InicioScreen() {
@@ -20,13 +22,14 @@ export default function InicioScreen() {
   const [isTemaryModalOpen, setIsTemaryModalOpen] = useState(false);
   const [createdCourseId, setCreatedCourseId] = useState<number | null>(null);
   const [cursos, setCursos] = useState<CursoCardI[]>([]);
-  const [editandoIndex, setEditandoIndex] = useState<number | null>(null);
+  const [editingCourse, setEditingCourse] = useState<{ id: number; titulo: string; image: number | null } | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const limit = 9;
   const router = useRouter();
   const { data: cursosData } = useCourses(currentPage, limit);
   const createCourseMutation = useCreateCourse();
+  const updateCourseMutation = useUpdateCourse();
   
   const totalPages = cursosData ? Math.ceil(cursosData.total / limit) : 1;
   
@@ -80,20 +83,30 @@ export default function InicioScreen() {
     console.log('Nuevo curso creado:', datos);
   };
 
-  const handleEditarCurso = (index: number) => {
-    setEditandoIndex(index);
+  const handleEditarCurso = (curso: CursoCardInfo) => {
+    setEditingCourse({
+      id: curso.id,
+      titulo: curso.titulo || 'Sin titulo',
+      image: curso.image || null,
+    });
     setIsEditModalOpen(true);
   };
 
-  const handleGuardarNombre = (nuevoNombre: string) => {
-    if (editandoIndex !== null) {
-      const cursosActualizados = [...cursos];
-      cursosActualizados[editandoIndex] = {
-        ...cursosActualizados[editandoIndex],
-        nombre: nuevoNombre
-      };
-      setCursos(cursosActualizados);
-    }
+  const handleUpdateCurso = (datos: { 
+    courseId: number;
+    titulo: string;
+    image: number | null;
+  }) => {
+    updateCourseMutation.mutate({
+      courseId: datos.courseId,
+      titulo: datos.titulo,
+      image: datos.image,
+    }, {
+      onSuccess: () => {
+        setIsEditModalOpen(false);
+        setEditingCourse(null);
+      },
+    });
   };
 
   const handleEliminarCurso = (index: number) => {
@@ -167,7 +180,7 @@ export default function InicioScreen() {
                   dificultad={curso.dificultad}
                   created_at={curso.created_at}
                   image={curso.image}
-                  onEdit={() => handleEditarCurso(index)}
+                  onEdit={() => handleEditarCurso(curso)}
                   onDelete={() => handleEliminarCurso(index)}
                 />
               </div>
@@ -288,6 +301,17 @@ export default function InicioScreen() {
         onOpenChange={setIsTemaryModalOpen}
         temaryid={createdCourseId || null}
       />
+
+      {editingCourse && (
+        <EditarCursoModal
+          open={isEditModalOpen}
+          onOpenChange={setIsEditModalOpen}
+          courseId={editingCourse.id}
+          initialTitle={editingCourse.titulo}
+          initialImage={editingCourse.image}
+          onUpdate={handleUpdateCurso}
+        />
+      )}
 
     </div>
   );
