@@ -21,7 +21,7 @@ return {
     ...module,
     subtopics: module.subtopics.map((subtopic: any) => ({
         ...subtopic,
-        state: stateMap.get(subtopic.title) ?? 'pending', // valor por defecto
+        state: stateMap.get(subtopic.title) ?? 'vacio', // valor por defecto
     })),
     })),
 };

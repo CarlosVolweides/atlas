@@ -3,6 +3,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { BookOpen, ArrowLeft, ArrowRight, Calendar, CheckCircle2, Circle, Clock, XCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import { useCourseInfo, useTemary } from '@/hooks/useCourse';
 import { technologyIcons } from '@/lib/utils/tecnologyIcons';
 import { ModuleTemaryI, SubtopicTemaryI, EstadoSubtema } from '@/types/course';
@@ -59,7 +60,7 @@ export default function DetalleCursoPage() {
   };
 
   const obtenerIconoEstado = (estado: EstadoSubtema | undefined) => {
-    const estadoValido = estado || 'pendiente';
+    const estadoValido = estado || 'vacio';
     switch (estadoValido) {
       case 'vacio':
         return { 
@@ -137,6 +138,62 @@ export default function DetalleCursoPage() {
     return totalSubtopics > 0 ? Math.round((completados / totalSubtopics) * 100) : 0;
   };
 
+  const obtenerMetricasProgreso = () => {
+    if (!temaryData?.modules) {
+      return {
+        totalSubtopics: 0,
+        completados: 0,
+        enCurso: 0,
+        pendientes: 0,
+        totalModulos: 0,
+        modulosCompletados: 0,
+        porcentaje: 0
+      };
+    }
+
+    let totalSubtopics = 0;
+    let completados = 0;
+    let enCurso = 0;
+    let pendientes = 0;
+    let totalModulos = temaryData.modules.length;
+    let modulosCompletados = 0;
+
+    temaryData.modules.forEach((module: ModuleTemaryI) => {
+      if (module.subtopics) {
+        const subtopics = module.subtopics;
+        totalSubtopics += subtopics.length;
+        
+        const completadosModulo = subtopics.filter(
+          sub => sub.state === 'completado' || sub.state === 'aprobado'
+        ).length;
+        completados += completadosModulo;
+
+        enCurso += subtopics.filter(
+          sub => sub.state === 'en-curso' || sub.state === 'listo-para-prueba'
+        ).length;
+
+        pendientes += subtopics.filter(
+          sub => !sub.state || sub.state === 'vacio' || sub.state === 'pendiente'
+        ).length;
+
+        // Módulo completado si todos sus subtemas están completados
+        if (subtopics.length > 0 && completadosModulo === subtopics.length) {
+          modulosCompletados++;
+        }
+      }
+    });
+
+    return {
+      totalSubtopics,
+      completados,
+      enCurso,
+      pendientes,
+      totalModulos,
+      modulosCompletados,
+      porcentaje: totalSubtopics > 0 ? Math.round((completados / totalSubtopics) * 100) : 0
+    };
+  };
+
   return (
     <div 
       className="min-h-screen max-h-screen flex flex-col overflow-hidden" 
@@ -207,6 +264,112 @@ export default function DetalleCursoPage() {
                 </div>
               ) : (
                 <div className="space-y-6">
+                  {/* Métricas de Progreso */}
+                  {temaryData && !isLoadingTemary && (() => {
+                    const metricas = obtenerMetricasProgreso();
+                    if (metricas.totalSubtopics === 0) return null;
+                    
+                    return (
+                      <div className="space-y-4 pb-4 border-b" style={{ borderColor: 'rgba(0, 163, 226, 0.3)' }}>
+                        <h3 className="text-sm font-semibold mb-3" style={{ color: '#ffffff' }}>
+                          Progreso del Curso
+                        </h3>
+                        
+                        {/* Barra de progreso general */}
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs" style={{ color: '#cccccc' }}>
+                              Progreso General
+                            </span>
+                            <span className="text-sm font-semibold" style={{ color: '#00A3E2' }}>
+                              {metricas.porcentaje}%
+                            </span>
+                          </div>
+                          <Progress 
+                            value={metricas.porcentaje} 
+                            className="h-2"
+                            style={{ background: 'rgba(255, 255, 255, 0.3)' }}
+                          />
+                        </div>
+
+                        {/* Estadísticas */}
+                        <div className="grid grid-cols-2 gap-3">
+                          {/* Subtemas completados */}
+                          <div 
+                            className="p-3 rounded-lg"
+                            style={{
+                              background: 'rgba(0, 163, 226, 0.15)',
+                              borderLeft: '3px solid #00A3E2'
+                            }}
+                          >
+                            <div className="flex items-center gap-2 mb-1">
+                              <CheckCircle2 className="w-4 h-4" style={{ color: '#00A3E2' }} />
+                              <span className="text-xs" style={{ color: '#cccccc' }}>
+                                Subtemas
+                              </span>
+                            </div>
+                            <p className="text-lg font-semibold" style={{ color: '#ffffff' }}>
+                              {metricas.completados}/{metricas.totalSubtopics}
+                            </p>
+                          </div>
+
+                          {/* Módulos completados */}
+                          <div 
+                            className="p-3 rounded-lg"
+                            style={{
+                              background: 'rgba(0, 163, 226, 0.15)',
+                              borderLeft: '3px solid #00A3E2'
+                            }}
+                          >
+                            <div className="flex items-center gap-2 mb-1">
+                              <BookOpen className="w-4 h-4" style={{ color: '#00A3E2' }} />
+                              <span className="text-xs" style={{ color: '#cccccc' }}>
+                                Módulos
+                              </span>
+                            </div>
+                            <p className="text-lg font-semibold" style={{ color: '#ffffff' }}>
+                              {metricas.modulosCompletados}/{metricas.totalModulos}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Estados de subtemas */}
+                        {metricas.enCurso > 0 || metricas.pendientes > 0 ? (
+                          <div className="flex flex-wrap gap-2 pt-2">
+                            {metricas.enCurso > 0 && (
+                              <Badge
+                                variant="outline"
+                                className="text-xs"
+                                style={{
+                                  background: 'rgba(0, 163, 226, 0.2)',
+                                  borderColor: '#00A3E2',
+                                  color: '#00A3E2'
+                                }}
+                              >
+                                <Clock className="w-3 h-3 mr-1" />
+                                {metricas.enCurso} en curso
+                              </Badge>
+                            )}
+                            {metricas.pendientes > 0 && (
+                              <Badge
+                                variant="outline"
+                                className="text-xs"
+                                style={{
+                                  background: 'rgba(255, 255, 255, 0.2)',
+                                  borderColor: '#ffffff',
+                                  color: '#ffffff'
+                                }}
+                              >
+                                <Circle className="w-3 h-3 mr-1" />
+                                {metricas.pendientes} pendientes
+                              </Badge>
+                            )}
+                          </div>
+                        ) : null}
+                      </div>
+                    );
+                  })()}
+
                   {/* Dificultad */}
                   {dificultad && (
                     <div>
