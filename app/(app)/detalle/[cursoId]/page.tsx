@@ -1,11 +1,11 @@
 "use client";
 import { useRouter, useParams } from 'next/navigation';
-import { BookOpen, ArrowLeft, ArrowRight, Calendar, CheckCircle2 } from 'lucide-react';
+import { BookOpen, ArrowLeft, ArrowRight, Calendar, CheckCircle2, Circle, Clock, XCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useCourseInfo, useTemary } from '@/hooks/useCourse';
 import { technologyIcons } from '@/lib/utils/tecnologyIcons';
-import { ModuleTemaryI, SubtopicTemaryI } from '@/types/course';
+import { ModuleTemaryI, SubtopicTemaryI, EstadoSubtema } from '@/types/course';
 import { Header } from '@/components/Header';
 
 export default function DetalleCursoPage() {
@@ -56,6 +56,85 @@ export default function DetalleCursoPage() {
     } catch {
       return dateString;
     }
+  };
+
+  const obtenerIconoEstado = (estado: EstadoSubtema | undefined) => {
+    const estadoValido = estado || 'pendiente';
+    switch (estadoValido) {
+      case 'vacio':
+        return { 
+          icon: <Circle className="w-4 h-4 flex-shrink-0" style={{ color: '#666666' }} />,
+          color: '#666666',
+          texto: 'Vacío'
+        };
+      case 'pendiente':
+        return { 
+          icon: <Clock className="w-4 h-4 flex-shrink-0" style={{ color: '#FFA500' }} />,
+          color: '#FFA500',
+          texto: 'Pendiente'
+        };
+      case 'en-curso':
+        return { 
+          icon: <Clock className="w-4 h-4 flex-shrink-0" style={{ color: '#00A3E2' }} />,
+          color: '#00A3E2',
+          texto: 'En curso'
+        };
+      case 'listo-para-prueba':
+        return { 
+          icon: <AlertCircle className="w-4 h-4 flex-shrink-0" style={{ color: '#FFFF00' }} />,
+          color: '#FFFF00',
+          texto: 'Listo para prueba'
+        };
+      case 'aprobado':
+        return { 
+          icon: <CheckCircle2 className="w-4 h-4 flex-shrink-0" style={{ color: '#00FF00' }} />,
+          color: '#00FF00',
+          texto: 'Aprobado'
+        };
+      case 'reprobado':
+        return { 
+          icon: <XCircle className="w-4 h-4 flex-shrink-0" style={{ color: '#FF4444' }} />,
+          color: '#FF4444',
+          texto: 'Reprobado'
+        };
+      case 'completado':
+        return { 
+          icon: <CheckCircle2 className="w-4 h-4 flex-shrink-0" style={{ color: '#00FF00' }} />,
+          color: '#00FF00',
+          texto: 'Completado'
+        };
+      default:
+        return { 
+          icon: <Circle className="w-4 h-4 flex-shrink-0" style={{ color: '#666666' }} />,
+          color: '#666666',
+          texto: 'Pendiente'
+        };
+    }
+  };
+
+  const calcularProgresoModulo = (module: ModuleTemaryI) => {
+    if (!module.subtopics || module.subtopics.length === 0) return 0;
+    const completados = module.subtopics.filter(
+      sub => sub.state === 'completado' || sub.state === 'aprobado'
+    ).length;
+    return Math.round((completados / module.subtopics.length) * 100);
+  };
+
+  const calcularProgresoGeneral = () => {
+    if (!temaryData?.modules) return 0;
+    let totalSubtopics = 0;
+    let completados = 0;
+    
+    temaryData.modules.forEach((module: ModuleTemaryI) => {
+      if (module.subtopics) {
+        totalSubtopics += module.subtopics.length;
+        completados += module.subtopics.filter(
+          sub => sub.state === 'completado' || sub.state === 'aprobado'
+        ).length;
+      }
+    });
+    
+    return totalSubtopics > 0 ? Math.round((completados / totalSubtopics) * 100) : 0;
   };
 
   return (
@@ -298,9 +377,24 @@ export default function DetalleCursoPage() {
                   <BookOpen className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-xl sm:text-2xl" style={{ color: '#ffffff' }}>
-                    Temario
-                  </h2>
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <h2 className="text-xl sm:text-2xl" style={{ color: '#ffffff' }}>
+                      Temario
+                    </h2>
+                    {temaryData?.modules && (
+                      <Badge
+                        variant="outline"
+                        className="text-xs sm:text-sm"
+                        style={{
+                          background: 'rgba(0, 255, 0, 0.2)',
+                          borderColor: '#00FF00',
+                          color: '#00FF00'
+                        }}
+                      >
+                        {calcularProgresoGeneral()}% completado
+                      </Badge>
+                    )}
+                  </div>
                   <p className="text-xs sm:text-sm mt-1" style={{ color: '#cccccc' }}>
                     {temaryData?.modules 
                       ? `${temaryData.modules.length} módulos • ${temaryData.modules.reduce((acc: number, m: ModuleTemaryI) => acc + (m.subtopics?.length || 0), 0)} subtemas`
@@ -344,9 +438,24 @@ export default function DetalleCursoPage() {
                             {module.order}
                           </div>
                           <div className="flex-1">
-                            <h3 className="text-base sm:text-lg" style={{ color: '#ffffff' }}>
-                              {module.title}
-                            </h3>
+                            <div className="flex items-center justify-between gap-2 mb-1">
+                              <h3 className="text-base sm:text-lg" style={{ color: '#ffffff' }}>
+                                {module.title}
+                              </h3>
+                              {module.subtopics && module.subtopics.length > 0 && (
+                                <Badge
+                                  variant="outline"
+                                  className="text-xs"
+                                  style={{
+                                    background: 'rgba(0, 163, 226, 0.2)',
+                                    borderColor: '#00A3E2',
+                                    color: '#00A3E2'
+                                  }}
+                                >
+                                  {calcularProgresoModulo(module)}%
+                                </Badge>
+                              )}
+                            </div>
                             {module.objective && (
                               <p className="text-xs mt-1" style={{ color: '#999999' }}>
                                 {module.objective}
@@ -361,30 +470,44 @@ export default function DetalleCursoPage() {
                         {/* Subtemas */}
                         {module.subtopics && module.subtopics.length > 0 && (
                           <div className="space-y-2 ml-11">
-                            {module.subtopics.map((subtopic: SubtopicTemaryI) => (
-                              <div
-                                key={subtopic.order}
-                                className="flex items-center gap-3 p-2 rounded"
-                                style={{
-                                  background: 'rgba(255, 255, 255, 0.05)'
-                                }}
-                              >
-                                <CheckCircle2 
-                                  className="w-4 h-4 flex-shrink-0" 
-                                  style={{ color: '#00A3E2' }}
-                                />
-                                <div className="flex-1">
-                                  <span className="text-sm" style={{ color: '#cccccc' }}>
-                                    {subtopic.order}. {subtopic.title}
-                                  </span>
-                                  {subtopic.description && (
-                                    <p className="text-xs mt-1" style={{ color: '#999999' }}>
-                                      {subtopic.description}
-                                    </p>
-                                  )}
+                            {module.subtopics.map((subtopic: SubtopicTemaryI) => {
+                              const { icon, color, texto } = obtenerIconoEstado(subtopic.state);
+                              return (
+                                <div
+                                  key={subtopic.order}
+                                  className="flex items-center gap-3 p-2 rounded"
+                                  style={{
+                                    background: 'rgba(255, 255, 255, 0.05)',
+                                    borderLeft: `3px solid ${color}`
+                                  }}
+                                >
+                                  {icon}
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-sm" style={{ color: '#cccccc' }}>
+                                        {subtopic.order}. {subtopic.title}
+                                      </span>
+                                      <Badge
+                                        variant="outline"
+                                        className="text-xs px-2 py-0"
+                                        style={{
+                                          background: `${color}20`,
+                                          borderColor: color,
+                                          color: color
+                                        }}
+                                      >
+                                        {texto}
+                                      </Badge>
+                                    </div>
+                                    {subtopic.description && (
+                                      <p className="text-xs mt-1" style={{ color: '#999999' }}>
+                                        {subtopic.description}
+                                      </p>
+                                    )}
+                                  </div>
                                 </div>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         )}
                       </div>
