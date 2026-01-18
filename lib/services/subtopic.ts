@@ -31,7 +31,7 @@ export const SubtopicService = {
                 modulo_id : moduloId,
                 titulo: subtema.title,
                 descripcion: subtema.description,
-                estado: 'pendiente',
+                estado: 'vacio',
                 orden: subtema.order,                
             }));
 
