@@ -1,11 +1,11 @@
 "use client";
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { 
-  ArrowLeft, BookOpen, 
-  CheckCircle2, Circle, 
-  Clock, XCircle, 
-  AlertCircle, 
+import {
+  ArrowLeft, BookOpen,
+  CheckCircle2, Circle,
+  Clock, XCircle,
+  AlertCircle,
   ClipboardList, ChevronRight,
   ChevronDown,
   ChevronUp
@@ -18,6 +18,7 @@ import { useTemary, useContextSubtopic, useUpdateSubtemaEstado, useCourseInfo } 
 import { useSubtopicStarted } from '@/hooks/useSubtopic';
 import { toast } from "sonner";
 import MarkdownRenderer from '@/components/MarkdownRenderer';
+import MarkdownSkeleton from '@/components/MarkdownSkeleton';
 
 type FlatSubtopic = {
   globalIndex: number
@@ -36,20 +37,20 @@ export default function LeccionViewer() {
   const {data: infoCurso} = useCourseInfo(idCurso)
 
   const flatSubtopics = useMemo<FlatSubtopic[]>(() => {
-  if (!temaryData) return []
+    if (!temaryData) return []
 
-  let index = 0
+    let index = 0
 
   return temaryData?.modules.flatMap((module : ModuleTemaryI) =>
-    module.subtopics.map(sub => ({
-      globalIndex: index++,
-      moduleOrder: module.order,
-      subtopicOrder: sub.order,
-      title: sub.title,
-      state: sub.state ?? 'pendiente'
-    }))
-  )
-}, [temaryData])
+      module.subtopics.map(sub => ({
+        globalIndex: index++,
+        moduleOrder: module.order,
+        subtopicOrder: sub.order,
+        title: sub.title,
+        state: sub.state ?? 'pendiente'
+      }))
+    )
+  }, [temaryData])
   const totalSubtopics = flatSubtopics.length;
 
   // Estado: índice global del subtema actual
@@ -57,14 +58,14 @@ export default function LeccionViewer() {
   const [estadosSubtemas, setEstadosSubtemas] = useState<EstadoSubtema[]>([]);
 
   const ordenActivo = useMemo(() => {
-  if (subtemaActual === null || !flatSubtopics[subtemaActual]) return null
-  return flatSubtopics[subtemaActual]
-    ? {
+    if (subtemaActual === null || !flatSubtopics[subtemaActual]) return null
+    return flatSubtopics[subtemaActual]
+      ? {
         mod: flatSubtopics[subtemaActual].moduleOrder,
         sub: flatSubtopics[subtemaActual].subtopicOrder
       }
-    : null
-}, [subtemaActual, flatSubtopics])
+      : null
+  }, [subtemaActual, flatSubtopics])
 
   const { mutateAsync: persistEstado } = useUpdateSubtemaEstado()
 
@@ -74,7 +75,7 @@ export default function LeccionViewer() {
   const [modoPrueba, setModoPrueba] = useState(false);
 
   //Estado de generacion de subtemas
-  const [subtopicIsLoading, setsubtopicIsLoading ] = useState(false)
+  const [subtopicIsLoading, setsubtopicIsLoading] = useState(false)
   //Estado de actualizacion de subtema
   const [isAdvancing, setIsAdvancing] = useState(false)
   //Estado para contenido generado temporalmente (no persistido en BD)
@@ -114,43 +115,43 @@ export default function LeccionViewer() {
     const estadoValido = estado || 'pendiente';
     switch (estadoValido) {
       case 'vacio':
-        return { 
+        return {
           icon: <Circle className="w-5 h-5 flex-shrink-0" style={{ color: '#666666' }} />,
           color: '#666666ff',
           texto: 'Pendiente'
         };
       case 'pendiente':
-        return { 
+        return {
           icon: <Clock className="w-5 h-5 flex-shrink-0" style={{ color: '#FFA500' }} />,
           color: '#FFA500',
           texto: 'En curso'
         };
       case 'listo-para-prueba':
-        return { 
+        return {
           icon: <AlertCircle className="w-5 h-5 flex-shrink-0" style={{ color: '#FFFF00' }} />,
           color: '#FFFF00',
           texto: 'Listo para prueba'
         };
       case 'aprobado':
-        return { 
+        return {
           icon: <CheckCircle2 className="w-5 h-5 flex-shrink-0" style={{ color: '#00FF00' }} />,
           color: '#00FF00',
           texto: 'Aprobado'
         };
       case 'reprobado':
-        return { 
+        return {
           icon: <XCircle className="w-5 h-5 flex-shrink-0" style={{ color: '#FF4444' }} />,
           color: '#FF4444',
           texto: 'Reprobado'
         };
       case 'completado':
-        return { 
+        return {
           icon: <CheckCircle2 className="w-5 h-5 flex-shrink-0" style={{ color: '#00FF00' }} />,
           color: '#00FF00',
           texto: 'Completado'
         };
       default:
-        return { 
+        return {
           icon: <Circle className="w-5 h-5 flex-shrink-0" style={{ color: '#666666' }} />,
           color: '#666666ff',
           texto: 'Pendiente'
@@ -162,7 +163,7 @@ export default function LeccionViewer() {
     // Primero mostrar la prueba antes de marcar como completado
     setModoPrueba(true);
   };
-  
+
   const actualizarSubtema = async () => {
     if (subtemaActual === null) return
 
@@ -194,18 +195,50 @@ export default function LeccionViewer() {
       })
       toast.error('No se pudo guardar el subtema como completado')
       throw error
+    }
   }
-}
 
   const handleGenerarSubtema = () => {
-    setsubtopicIsLoading(true)
+    if (subtemaActual === null || !flatSubtopics[subtemaActual]) return
+    if (!infoCurso?.systemPrompt) return
+
+    const estadoActual = estadosSubtemas[subtemaActual]
+    const hasContent = estadoActual !== 'vacio'
+    const subtopic = flatSubtopics[subtemaActual]
+
+    if (!subtopic) {
+      setsubtopicIsLoading(false)
+      return
+    }
+
+    generateSubtopic({
+      knowledgeProfile: infoCurso.systemPrompt ?? "",
+      subtopic: {
+        title: subtopic.title,
+        description: ''
+      },
+      courseId: idCurso,
+      moduleOrder: subtopic.moduleOrder,
+      subtopicOrder: subtopic.subtopicOrder,
+      hasContent: hasContent
+    })
+      .then((response) => {
+        setGeneratedContent(response)
+        if (!hasContent) actualizarSubtema()
+      })
+      .catch((error) => {
+        console.error('Error al generar subtema:', error)
+      })
+      .finally(() => {
+        setsubtopicIsLoading(false)
+      })
   }
 
   const handleSiguiente = async () => {
     if (isAdvancing) return
     if (subtemaActual < totalSubtopics - 1) {
       setIsAdvancing(true)
-      
+
       try {
         await actualizarSubtema()
         setSubtemaActual(subtemaActual + 1);
@@ -219,7 +252,7 @@ export default function LeccionViewer() {
         setIsAdvancing(false)
       }
 
-    } 
+    }
   };
 
   const toggleModulo = (moduleIndex: number) => {
@@ -234,89 +267,57 @@ export default function LeccionViewer() {
     });
   };
 
-  
+
   const handleVolver = () => {
     router.push('/inicio');
   };
   const handleCambiarSubtema = (index: number) => {
     setSubtemaActual(index);
     setsubtopicIsLoading(false);
-    
+
   }
 
   // Para iniciar estados provenientes del flatSubtopics (temaryData)
   const initializedRef = useRef(false)
 
   useEffect(() => {
-  if (!flatSubtopics.length || initializedRef.current) return
+    if (!flatSubtopics.length || initializedRef.current) return
 
-  const iniciales: EstadoSubtema[] = flatSubtopics.map(
-    sub => sub.state
-  )
+    const iniciales: EstadoSubtema[] = flatSubtopics.map(
+      sub => sub.state
+    )
 
-  setEstadosSubtemas(iniciales)
+    setEstadosSubtemas(iniciales)
 
-  const primerPendiente =
-    iniciales.findIndex(e => e !== 'completado')
+    const primerPendiente =
+      iniciales.findIndex(e => e !== 'completado')
 
-  setSubtemaActual(primerPendiente !== -1 ? primerPendiente : 0)
+    setSubtemaActual(primerPendiente !== -1 ? primerPendiente : 0)
 
-  initializedRef.current = true
-}, [flatSubtopics])
+    initializedRef.current = true
+  }, [flatSubtopics])
 
 
   useEffect(() => {
-  if (subtemaActual === null) return
+    if (subtemaActual === null) return
 
-  const sub = flatSubtopics[subtemaActual]
-  if (!sub) return
+    const sub = flatSubtopics[subtemaActual]
+    if (!sub) return
 
-  const moduleIndex = temaryData.modules.findIndex(
-    (m: ModuleTemaryI) => m.order === sub.moduleOrder
-  )
+    const moduleIndex = temaryData.modules.findIndex(
+      (m: ModuleTemaryI) => m.order === sub.moduleOrder
+    )
 
-  if (moduleIndex !== -1) {
-    setModulosExpandidos(prev => new Set([...prev, moduleIndex]))
-  }
-}, [subtemaActual, flatSubtopics, temaryData])
+    if (moduleIndex !== -1) {
+      setModulosExpandidos(prev => new Set([...prev, moduleIndex]))
+    }
+  }, [subtemaActual, flatSubtopics, temaryData])
 
   // useEffect para buscar contenido o generar automáticamente cuando se navega a un subtema vacío
   useEffect(() => {
     // Limpiar contenido generado al cambiar de subtema
     setGeneratedContent(null)
-
-    // Verificar condiciones para generar contenido
-    if (subtemaActual === null || !flatSubtopics[subtemaActual]) return
-    if (!infoCurso?.systemPrompt) return
-
-    const estadoActual = estadosSubtemas[subtemaActual]
-    const hasContent = estadoActual !== 'vacio'
-    /*if (estadoActual !== 'vacio') return*/
-
-    const subtopic = flatSubtopics[subtemaActual]
-    if (!subtopic) return
-
-    // Buscar o generar contenido automáticamente
-    generateSubtopic({
-      knowledgeProfile: infoCurso.systemPrompt ?? "",
-      subtopic: {
-        title: subtopic.title,
-        description: ''
-      },
-      courseId: idCurso, 
-      moduleOrder : subtopic.moduleOrder,
-      subtopicOrder: subtopic.subtopicOrder,
-      hasContent: hasContent
-    })
-      .then((response) => {
-        setGeneratedContent(response)
-        if(!hasContent) actualizarSubtema()
-      })
-      .catch((error) => {
-        // El hook ya maneja el toast de error
-        console.error('Error al generar subtema:', error)
-      })
-  }, [subtemaActual, flatSubtopics, estadosSubtemas, infoCurso?.systemPrompt, generateSubtopic])
+  }, [subtemaActual])
 
 
   const porcentajeCompletado = Math.round(
@@ -324,17 +325,17 @@ export default function LeccionViewer() {
   );
 
   return (
-    <div 
-      className="min-h-screen max-h-screen flex flex-col overflow-hidden" 
+    <div
+      className="min-h-screen max-h-screen flex flex-col overflow-hidden"
       style={{ background: 'linear-gradient(135deg, #001a33 0%, #004d66 50%, #00A3E2 100%)' }}
     >
       {/* Header */}
-      <header 
-        className="w-full px-4 md:px-8 py-3 md:py-4" 
-        style={{ 
-          background: 'rgba(0, 0, 0, 0.3)', 
-          backdropFilter: 'blur(10px)', 
-          borderBottom: '1px solid rgba(0, 163, 226, 0.2)' 
+      <header
+        className="w-full px-4 md:px-8 py-3 md:py-4"
+        style={{
+          background: 'rgba(0, 0, 0, 0.3)',
+          backdropFilter: 'blur(10px)',
+          borderBottom: '1px solid rgba(0, 163, 226, 0.2)'
         }}
       >
         {/* Versión móvil */}
@@ -352,7 +353,7 @@ export default function LeccionViewer() {
           </div>
 
           <div className="flex items-center gap-3">
-            <div 
+            <div
               className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
               style={{ background: 'linear-gradient(135deg, #00A3E2 0%, #006b9a 100%)' }}
             >
@@ -362,20 +363,20 @@ export default function LeccionViewer() {
               <h1 className="text-lg truncate" style={{ color: '#ffffff' }}>{infoCurso?.tecnologia}</h1>
               <div className="flex gap-2 mt-1 flex-wrap">
                 {infoCurso?.herramientasRequeridas &&
-                infoCurso?.conocimientosPrevios.map((tech : string[], i: number) => (
-                  <span key={i} className="text-xs px-2 py-0.5 rounded" style={{ 
-                    background: 'rgba(0, 163, 226, 0.3)',
-                    color: '#ffffff'
-                  }}>
-                    {tech}
-                  </span>
-                ))}
+                  infoCurso?.conocimientosPrevios.map((tech: string[], i: number) => (
+                    <span key={i} className="text-xs px-2 py-0.5 rounded" style={{
+                      background: 'rgba(0, 163, 226, 0.3)',
+                      color: '#ffffff'
+                    }}>
+                      {tech}
+                    </span>
+                  ))}
               </div>
             </div>
           </div>
 
           <div className="flex gap-2">
-            <div className="flex-1 px-3 py-2 rounded-lg" style={{ 
+            <div className="flex-1 px-3 py-2 rounded-lg" style={{
               background: 'rgba(0, 163, 226, 0.2)',
               backdropFilter: 'blur(10px)',
               borderColor: '#00A3E2',
@@ -396,8 +397,8 @@ export default function LeccionViewer() {
               <span className="text-xs" style={{ color: '#ffffff' }}>Progreso</span>
               <span className="text-xs" style={{ color: '#ffffff' }}>{porcentajeCompletado}%</span>
             </div>
-            <Progress 
-              value={porcentajeCompletado} 
+            <Progress
+              value={porcentajeCompletado}
               className="h-2"
               style={{ background: 'rgba(255, 255, 255, 0.3)' }}
             />
@@ -417,7 +418,7 @@ export default function LeccionViewer() {
           </Button>
 
           <div className="flex items-center gap-3">
-            <div 
+            <div
               className="w-10 h-10 rounded-lg flex items-center justify-center"
               style={{ background: 'linear-gradient(135deg, #00A3E2 0%, #006b9a 100%)' }}
             >
@@ -427,14 +428,14 @@ export default function LeccionViewer() {
               <h1 className="text-xl" style={{ color: '#ffffff' }}>{infoCurso?.tecnologia}</h1>
               <div className="flex gap-2 mt-1">
                 {infoCurso?.herramientasRequeridas &&
-                infoCurso?.herramientasRequeridas.map((tech: string[], i: number) => (
-                  <span key={i} className="text-xs px-2 py-0.5 rounded" style={{ 
-                    background: 'rgba(0, 163, 226, 0.3)',
-                    color: '#ffffff'
-                  }}>
-                    {tech}
-                  </span>
-                ))}
+                  infoCurso?.herramientasRequeridas.map((tech: string[], i: number) => (
+                    <span key={i} className="text-xs px-2 py-0.5 rounded" style={{
+                      background: 'rgba(0, 163, 226, 0.3)',
+                      color: '#ffffff'
+                    }}>
+                      {tech}
+                    </span>
+                  ))}
               </div>
             </div>
           </div>
@@ -443,7 +444,7 @@ export default function LeccionViewer() {
             {/* Estadísticas */}
             <div className="flex gap-4">
               {/* Subtemas aprobados */}
-              <div className="px-4 py-2 rounded-lg" style={{ 
+              <div className="px-4 py-2 rounded-lg" style={{
                 background: 'rgba(0, 163, 226, 0.2)',
                 backdropFilter: 'blur(10px)',
                 borderColor: '#00A3E2',
@@ -465,8 +466,8 @@ export default function LeccionViewer() {
                 <span className="text-sm" style={{ color: '#ffffff' }}>Progreso</span>
                 <span className="text-sm" style={{ color: '#ffffff' }}>{porcentajeCompletado}%</span>
               </div>
-              <Progress 
-                value={porcentajeCompletado} 
+              <Progress
+                value={porcentajeCompletado}
                 className="h-2"
                 style={{ background: 'rgba(255, 255, 255, 0.3)' }}
               />
@@ -479,9 +480,9 @@ export default function LeccionViewer() {
       <div className="flex-1 overflow-hidden flex flex-col md:flex-row gap-4 md:gap-6 p-4 md:p-8">
         {/* Lista de subtemas - Sidebar */}
         <div className="w-full md:w-80 md:flex-shrink-0 flex flex-col min-h-0">
-          <Card 
-            style={{ 
-              background: 'rgba(38, 36, 34, 0.6)', 
+          <Card
+            style={{
+              background: 'rgba(38, 36, 34, 0.6)',
               backdropFilter: 'blur(10px)',
               borderColor: '#00A3E2',
               borderWidth: '1px',
@@ -501,9 +502,9 @@ export default function LeccionViewer() {
                 {temaryData?.modules.map((module: ModuleTemaryI, moduleIndex: number) => {
                   const isExpanded = modulosExpandidos.has(moduleIndex);
                   const subtopicsDelModulo = flatSubtopics.filter(
-                      s => s.moduleOrder === module.order
-                    )
-                  
+                    s => s.moduleOrder === module.order
+                  )
+
                   return (
                     <div key={moduleIndex} className="space-y-1">
                       {/* Header del módulo */}
@@ -518,7 +519,7 @@ export default function LeccionViewer() {
                         <div className="flex items-center gap-2 flex-1 min-w-0">
                           <div
                             className="w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-semibold"
-                            style={{ 
+                            style={{
                               background: '#00A3E2',
                               color: '#ffffff'
                             }}
@@ -547,21 +548,20 @@ export default function LeccionViewer() {
                             const isBlocked =
                               globalIndex > 0 &&
                               estadosSubtemas[globalIndex - 1] !== 'completado'
-                            
+
                             return (
                               <button
                                 key={globalIndex}
-                                onClick={() => 
-                                  isBlocked 
-                                  ? toast.warning("Subtema bloqueado, se requiere completar Subtemas o Modulos anteriores")
-                                  : handleCambiarSubtema(globalIndex)
-                                }                                
-                                className={`w-full text-left p-2 rounded-lg transition-all ${
-                                  isActive ? 'ring-2 ring-cyan-400' : ''
-                                }`}
+                                onClick={() =>
+                                  isBlocked
+                                    ? toast.warning("Subtema bloqueado, se requiere completar Subtemas o Modulos anteriores")
+                                    : handleCambiarSubtema(globalIndex)
+                                }
+                                className={`w-full text-left p-2 rounded-lg transition-all ${isActive ? 'ring-2 ring-cyan-400' : ''
+                                  }`}
                                 style={{
-                                  background: isActive 
-                                    ? 'rgba(0, 163, 226, 0.2)' 
+                                  background: isActive
+                                    ? 'rgba(0, 163, 226, 0.2)'
                                     : 'rgba(255, 255, 255, 0.05)',
                                   color: '#ffffff'
                                 }}
@@ -608,112 +608,112 @@ export default function LeccionViewer() {
             </div>
           ) : !modoTutoria ? (
             <div className="h-full overflow-y-auto">
-              <Card 
-                style={{ 
-                  background: 'rgba(38, 36, 34, 0.6)', 
+              <Card
+                style={{
+                  background: 'rgba(38, 36, 34, 0.6)',
                   backdropFilter: 'blur(10px)',
                   borderColor: '#00A3E2',
                   borderWidth: '1px'
                 }}
               >
-              <CardContent className="p-4 md:p-8">
-                <div className="mb-4 md:mb-6">
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-0 mb-3 md:mb-4">
-                    <h2 className="text-xl md:text-2xl" style={{ color: '#ffffff' }}>
-                      {flatSubtopics[subtemaActual]?.title || 'Subtema'}
-                    </h2>
-                    {estadosSubtemas[subtemaActual] === 'aprobado' && (
-                      <div className="flex items-center gap-2 px-3 py-1 rounded-full self-start" style={{ background: 'rgba(0, 163, 226, 0.2)' }}>
-                        <CheckCircle2 className="w-4 h-4" style={{ color: '#00A3E2' }} />
-                        <span className="text-sm" style={{ color: '#00A3E2' }}>Completado</span>
+                <CardContent className="p-4 md:p-8">
+                  <div className="mb-4 md:mb-6">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-0 mb-3 md:mb-4">
+                      <h2 className="text-xl md:text-2xl" style={{ color: '#ffffff' }}>
+                        {flatSubtopics[subtemaActual]?.title || 'Subtema'}
+                      </h2>
+                      {estadosSubtemas[subtemaActual] === 'aprobado' && (
+                        <div className="flex items-center gap-2 px-3 py-1 rounded-full self-start" style={{ background: 'rgba(0, 163, 226, 0.2)' }}>
+                          <CheckCircle2 className="w-4 h-4" style={{ color: '#00A3E2' }} />
+                          <span className="text-sm" style={{ color: '#00A3E2' }}>Completado</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-xs md:text-sm" style={{ color: '#cccccc' }}>
+                      Subtema {subtemaActual + 1} de {totalSubtopics}
+                    </div>
+                  </div>
+
+                  <div
+                    className="prose prose-invert max-w-none mb-6 md:mb-8"
+                    style={{ color: '#ffffff', lineHeight: '1.8' }}
+                  >
+                    <div className="mb-3 md:mb-4 text-sm md:text-base">
+                      {isGenerating ? (
+                        <div className="flex flex-col gap-4">
+                          <MarkdownSkeleton />
+                        </div>
+                      ) : generatedContent?.content ? (
+                        <div className="flex flex-col gap-4">
+                          <MarkdownRenderer content={generatedContent.content} />
+                        </div>
+                      ) : contextSubtopic?.content ? (
+                        <div className="flex flex-col gap-4">
+                          <MarkdownRenderer content={contextSubtopic.content} />
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-3 md:gap-4 pt-4 md:pt-6 border-t" style={{ borderColor: 'rgba(0, 163, 226, 0.2)' }}>
+                    {/* Botón de generar subtema */}
+                    {estadosSubtemas[subtemaActual] == 'vacio' && (
+                      <div>
+                        <Button
+                          onClick={handleGenerarSubtema}
+                          variant="outline"
+                          className="w-full text-sm md:text-base"
+                          style={{
+                            background: 'rgba(255, 255, 255, 0.05)',
+                            borderColor: '#00A3E2',
+                            color: '#ffffff'
+                          }}
+                        >
+                          <ClipboardList className="w-4 h-4 mr-2" />
+                          Comenzar Lección
+                        </Button>
+
+                        {subtopicIsLoading && (
+                          <p
+                            className="w-full text-sm md:text-base"
+                            style={{
+                              color: '#ffffff',
+                              textAlign: 'center'
+                            }}>
+                            Cargando Contenido...
+                          </p>
+
+                        )}
                       </div>
                     )}
-                  </div>
-                  <div className="text-xs md:text-sm" style={{ color: '#cccccc' }}>
-                    Subtema {subtemaActual + 1} de {totalSubtopics}
-                  </div>
-                </div>
 
-                <div 
-                  className="prose prose-invert max-w-none mb-6 md:mb-8"
-                  style={{ color: '#ffffff', lineHeight: '1.8' }}
-                >
-                  <div className="mb-3 md:mb-4 text-sm md:text-base">
-                    {isGenerating ? (
-                      <div className="flex items-center justify-center py-8">
-                        <p style={{ color: '#ffffff' }}>Cargando...</p>
-                      </div>
-                    ) : generatedContent?.content ? (
+                    {estadosSubtemas[subtemaActual] !== 'vacio' && (
                       <div className="flex flex-col gap-4">
-                        <MarkdownRenderer content={generatedContent.content} />
+
+                        {/* Boton de siguiente subtema */}
+
+                        {subtemaActual < totalSubtopics - 1 && (
+                          <Button
+                            onClick={handleSiguiente}
+                            disabled={isAdvancing}
+                            variant="outline"
+                            className="md:ml-auto md:w-auto w-full text-sm md:text-base"
+                            style={{
+                              background: 'rgba(0, 163, 226, 0.1)',
+                              borderColor: '#00A3E2',
+                              color: '#ffffff'
+                            }}
+                          >
+                            {isAdvancing ? 'Guardando...' : 'Siguiente subtema'}
+                            <ChevronRight className="w-4 h-4 ml-2" />
+                          </Button>
+                        )}
                       </div>
-                    ) : contextSubtopic?.content ? (
-                      <div className="flex flex-col gap-4">
-                        <MarkdownRenderer content={contextSubtopic.content} />
-                      </div>
-                    ) : null}
+                    )}
+
                   </div>
-                </div>
-
-                <div className="flex flex-col gap-3 md:gap-4 pt-4 md:pt-6 border-t" style={{ borderColor: 'rgba(0, 163, 226, 0.2)' }}>
-                  {/* Botón de generar subtema */}
-                  {estadosSubtemas[subtemaActual] == 'vacio' && (
-                    <div>                      
-                    <Button
-                      onClick={handleGenerarSubtema}
-                      variant="outline"
-                      className="w-full text-sm md:text-base"
-                      style={{
-                        background: 'rgba(255, 255, 255, 0.05)',
-                        borderColor: '#00A3E2',
-                        color: '#ffffff'
-                      }}
-                    >
-                      <ClipboardList className="w-4 h-4 mr-2" />
-                      Generar subtema
-                    </Button>
-
-                      {subtopicIsLoading && (
-                        <p 
-                        className="w-full text-sm md:text-base"
-                        style={{
-                          color: '#ffffff',
-                          textAlign: 'center'
-                        }}>
-                          Generando Subtema...
-                        </p>
-                        
-                      )}
-                    </div>
-                  )}
-
-                  {estadosSubtemas[subtemaActual] !== 'vacio' && (
-                    <div className="flex flex-col gap-4">
-
-                      {/* Boton de siguiente subtema */}
-                      
-                      {subtemaActual < totalSubtopics - 1 && (
-                        <Button
-                        onClick={handleSiguiente}
-                        disabled={isAdvancing}
-                        variant="outline"
-                        className="md:ml-auto md:w-auto w-full text-sm md:text-base"
-                        style={{
-                          background: 'rgba(0, 163, 226, 0.1)',
-                          borderColor: '#00A3E2',
-                          color: '#ffffff'
-                        }}
-                      >
-                        {isAdvancing ? 'Guardando...' : 'Siguiente subtema'}
-                        <ChevronRight className="w-4 h-4 ml-2" />
-                      </Button>
-                      )}
-                    </div>
-                  )}
-
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
             </div>
           ) : (
             <div className="h-full flex flex-col">
@@ -737,7 +737,7 @@ export default function LeccionViewer() {
               </div>
               <div className="flex-1 min-h-0">
               </div>
-              
+
               {/* Botón para realizar prueba después de completar la tutoría */}
               {subtemaAprobado && (
                 <div className="mt-3 md:mt-4">
