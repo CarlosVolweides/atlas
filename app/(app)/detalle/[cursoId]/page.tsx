@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useCourseInfo, useTemary } from '@/hooks/useCourse';
-import { technologyIcons } from '@/lib/utils/tecnologyIcons';
+import { iconMapping } from '@/lib/utils/iconMapping';
 import { ModuleTemaryI, SubtopicTemaryI, EstadoSubtema } from '@/types/course';
 import { Header } from '@/components/Header';
 
@@ -27,7 +27,8 @@ export default function DetalleCursoPage() {
   };
 
   const tecnologia = courseInfo?.tecnologia || '';
-  const Icon = tecnologia ? technologyIcons[tecnologia.toLowerCase()] : null;
+  const imageId = (courseInfo as any)?.image || null;
+  const Icon = imageId ? iconMapping[imageId] : null;
   const dificultad = courseInfo?.dificultad || null;
   const razonCurso = (courseInfo as any)?.razonCurso || null;
   const conocimientosPrevios = (courseInfo?.conocimientosPrevios || []) as string[];

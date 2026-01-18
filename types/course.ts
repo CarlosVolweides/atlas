@@ -26,6 +26,7 @@ export interface CursoCardInfo {
     dificultad?: string | null;
     created_at?: string | null;
     titulo: string | null;
+    image?: number | null;
 }
 
 export interface CreateCourseParams {

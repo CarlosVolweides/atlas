@@ -55,24 +55,25 @@ export const CourseService = {
             throw error;
         }
         
-        // Obtener las dificultades y created_at de los cursos
+        // Obtener las dificultades, created_at e image de los cursos
         const courseIds = data?.map(course => course.id || course.curso_id).filter(Boolean) || [];
-        let cursosInfoMap: Record<number, { dificultad: string | null; created_at: string | null }> = {};
+        let cursosInfoMap: Record<number, { dificultad: string | null; created_at: string | null; image: number | null }> = {};
         
         if (courseIds.length > 0) {
             const { data: cursosData, error: cursosError } = await supabase
                 .from('Cursos')
-                .select('id, dificultad, created_at')
+                .select('id, dificultad, created_at, image')
                 .in('id', courseIds);
             
             if (!cursosError && cursosData) {
                 cursosInfoMap = cursosData.reduce((acc, curso) => {
                     acc[curso.id] = {
                         dificultad: curso.dificultad,
-                        created_at: curso.created_at
+                        created_at: curso.created_at,
+                        image: curso.image
                     };
                     return acc;
-                }, {} as Record<number, { dificultad: string | null; created_at: string | null }>);
+                }, {} as Record<number, { dificultad: string | null; created_at: string | null; image: number | null }>);
             }
         }
         
@@ -83,6 +84,7 @@ export const CourseService = {
             const cursoInfo = courseId ? cursosInfoMap[courseId] : null;
             course.dificultad = cursoInfo?.dificultad || null;
             course.created_at = cursoInfo?.created_at || null;
+            course.image = cursoInfo?.image || null;
             return course
         });
         
@@ -99,7 +101,7 @@ export const CourseService = {
         const supabase = createClient();
         
         const { data: courseInfo, error } = await supabase.from('Cursos')
-        .select('tecnologia, dificultad, conocimientosPrevios, herramientasRequeridas, tecnologiasExcluidas, systemPrompt, titulo')
+        .select('tecnologia, dificultad, conocimientosPrevios, herramientasRequeridas, tecnologiasExcluidas, systemPrompt, titulo, image')
         .eq('id', cursoId)
         .single();
 

@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader } from './ui/card';
 import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
-import { technologyIcons } from '@/lib/utils/tecnologyIcons';
+import { iconMapping } from '@/lib/utils/iconMapping';
 
 interface CursoCardProps {
   nombre: string;
@@ -12,6 +12,7 @@ interface CursoCardProps {
   tecnologias: string[];
   dificultad?: string | null;
   created_at?: string | null;
+  image?: number | null;
   onEdit?: () => void;
   onDelete?: () => void;
 }
@@ -56,8 +57,8 @@ const formatDate = (dateString: string | null | undefined) => {
   }
 };
 
-export function CursoCard({ nombre, porcentaje, tecnologias, dificultad, created_at, onEdit, onDelete }: CursoCardProps) {
-  const Icon = technologyIcons[nombre.toLowerCase() as string]
+export function CursoCard({ nombre, porcentaje, tecnologias, dificultad, created_at, image, onEdit, onDelete }: CursoCardProps) {
+  const Icon = image ? iconMapping[image] : null;
   const dificultadStyle = getDificultadColor(dificultad);
   const dificultadLabel = getDificultadLabel(dificultad);
   const fechaFormateada = formatDate(created_at);

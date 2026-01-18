@@ -166,6 +166,7 @@ export default function InicioScreen() {
                   tecnologias={curso.herramientasRequeridas}
                   dificultad={curso.dificultad}
                   created_at={curso.created_at}
+                  image={curso.image}
                   onEdit={() => handleEditarCurso(index)}
                   onDelete={() => handleEliminarCurso(index)}
                 />
