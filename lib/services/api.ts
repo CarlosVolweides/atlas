@@ -36,6 +36,15 @@ export const ApiServices = {
     },
     subtopicStarted: {
         async create(knowledgeProfile: string, subtopic: { title: string; description?: string; }, courseId: number, moduleOrder: number, subtopicOrder: number) {
+            if (process.env.NEXT_PUBLIC_LLM_ACTIVE && process.env.NEXT_PUBLIC_LLM_ACTIVE === "false") {
+                console.log("Creating context in development mode")
+                await new Promise(resolve => setTimeout(resolve, 2500));
+                return {
+                    title: "Titulo de modo development",
+                    content: "content de modo development",
+                    estimated_read_time_min: 1,
+                };
+            }
             const subtopicStartedResponse = await fetch(`/api/${llmService}/subtopicStarted`, {
                 method: 'POST',
                 headers: {
