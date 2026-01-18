@@ -363,7 +363,7 @@ export default function LeccionViewer() {
               <h1 className="text-lg truncate" style={{ color: '#ffffff' }}>{infoCurso?.tecnologia}</h1>
               <div className="flex gap-2 mt-1 flex-wrap">
                 {infoCurso?.herramientasRequeridas &&
-                  infoCurso?.conocimientosPrevios.map((tech: string[], i: number) => (
+                  infoCurso?.conocimientosPrevios?.map((tech: string[], i: number) => (
                     <span key={i} className="text-xs px-2 py-0.5 rounded" style={{
                       background: 'rgba(0, 163, 226, 0.3)',
                       color: '#ffffff'
@@ -428,7 +428,7 @@ export default function LeccionViewer() {
               <h1 className="text-xl" style={{ color: '#ffffff' }}>{infoCurso?.tecnologia}</h1>
               <div className="flex gap-2 mt-1">
                 {infoCurso?.herramientasRequeridas &&
-                  infoCurso?.herramientasRequeridas.map((tech: string[], i: number) => (
+                  infoCurso?.herramientasRequeridas?.map((tech: string[], i: number) => (
                     <span key={i} className="text-xs px-2 py-0.5 rounded" style={{
                       background: 'rgba(0, 163, 226, 0.3)',
                       color: '#ffffff'
