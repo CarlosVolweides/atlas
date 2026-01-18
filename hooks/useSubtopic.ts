@@ -25,8 +25,7 @@ export const useSubtopicStarted = () => {
     mutationFn: async ({ knowledgeProfile, subtopic, courseId, moduleOrder, subtopicOrder, hasContent }) => {
       return await ApiServices.subtopicStarted.get(knowledgeProfile, subtopic, courseId, moduleOrder, subtopicOrder, hasContent);
     },
-    onSuccess: () => {
-        toast.success('Contenido de subtema creado existosamente');
+    onSuccess: () => {       
         queryClient.invalidateQueries(['subtopic-content']);
     },
     onError: (error: Error) => {
