@@ -12,6 +12,7 @@ export interface CursoDB {
   esquemaTemario: TemaryInterface | null;
   user_id: string;
   created_at: string;
+  titulo: string | null;
 }
 
 export interface ModuloDB {

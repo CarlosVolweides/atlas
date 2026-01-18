@@ -25,6 +25,7 @@ export interface CursoCardInfo {
     herramientasRequeridas: string[];
     dificultad?: string | null;
     created_at?: string | null;
+    titulo: string | null;
 }
 
 export interface CreateCourseParams {

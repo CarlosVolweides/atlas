@@ -99,7 +99,7 @@ export const CourseService = {
         const supabase = createClient();
         
         const { data: courseInfo, error } = await supabase.from('Cursos')
-        .select('tecnologia, dificultad, conocimientosPrevios, herramientasRequeridas, tecnologiasExcluidas, systemPrompt')
+        .select('tecnologia, dificultad, conocimientosPrevios, herramientasRequeridas, tecnologiasExcluidas, systemPrompt, titulo')
         .eq('id', cursoId)
         .single();
 
@@ -181,6 +181,7 @@ export const CourseService = {
                         ? JSON.parse(plannerData)
                         : plannerData,
                 systemPrompt: systemPromptData ?? "",
+                titulo: course.tecnologiaPrincipal ?? null,
             };
 
             return supabase.from("Cursos")

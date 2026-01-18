@@ -26,7 +26,6 @@ export default function InicioScreen() {
   const limit = 9;
   const router = useRouter();
   const { data: cursosData } = useCourses(currentPage, limit);
-  console.log("CursoData",cursosData)
   const createCourseMutation = useCreateCourse();
   
   const totalPages = cursosData ? Math.ceil(cursosData.total / limit) : 1;
@@ -162,7 +161,7 @@ export default function InicioScreen() {
             {cursosData?.courses?.map((curso, index) => (
               <div key={curso.id} onClick={() => router.push(`/detalle/${curso.id}`)}>
                 <CursoCard                  
-                  nombre={curso.tecnologia}
+                  nombre={curso.titulo || 'Sin titulo'}
                   porcentaje={curso.progreso}
                   tecnologias={curso.herramientasRequeridas}
                   dificultad={curso.dificultad}
