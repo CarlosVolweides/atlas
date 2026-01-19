@@ -36,19 +36,19 @@ type CrearCursoFormData = z.infer<typeof crearCursoSchema>;
 interface CrearCursoModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCrearCurso?: (datos: { 
-    tecnologiaPrincipal: string; 
+  onCrearCurso?: (datos: {
+    tecnologiaPrincipal: string;
     dificultad: string;
     razonCurso: string;
-    indispensables?: string[]; 
-    conocimientosPrevios?: string[]; 
+    indispensables?: string[];
+    conocimientosPrevios?: string[];
     tecnologiasFueraAlcance?: string[];
   }) => void;
 }
 
 export function CrearCursoModal({ open, onOpenChange, onCrearCurso }: CrearCursoModalProps) {
   const [configuracionAvanzada, setConfiguracionAvanzada] = useState(false);
-  
+
   const form = useForm<CrearCursoFormData>({
     resolver: zodResolver(crearCursoSchema),
     defaultValues: {
@@ -86,7 +86,7 @@ export function CrearCursoModal({ open, onOpenChange, onCrearCurso }: CrearCurso
       conocimientosPrevios: data.conocimientosPrevios && data.conocimientosPrevios.length > 0 ? data.conocimientosPrevios : undefined,
       tecnologiasFueraAlcance: data.tecnologiasFueraAlcance && data.tecnologiasFueraAlcance.length > 0 ? data.tecnologiasFueraAlcance : undefined,
     });
-    
+
     form.reset();
     onOpenChange(false);
   };
@@ -98,10 +98,10 @@ export function CrearCursoModal({ open, onOpenChange, onCrearCurso }: CrearCurso
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent 
+      <DialogContent
         className="sm:max-w-[450px] max-h-[90vh] overflow-y-auto"
-        style={{ 
-          background: 'rgba(38, 36, 34, 0.95)', 
+        style={{
+          background: 'rgba(38, 36, 34, 0.95)',
           backdropFilter: 'blur(20px)',
           borderColor: '#00A3E2',
           borderWidth: '1px'
@@ -109,18 +109,18 @@ export function CrearCursoModal({ open, onOpenChange, onCrearCurso }: CrearCurso
       >
         <DialogHeader>
           <div className="flex items-center gap-3 mb-2">
-            <div 
+            <div
               className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center"
               style={{ background: 'linear-gradient(135deg, #00A3E2 0%, #006b9a 100%)' }}
             >
               <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
             </div>
             <DialogTitle className="text-xl sm:text-2xl" style={{ color: '#ffffff' }}>
-              Crear Nueva Lección
+              Crear Nuevo Curso
             </DialogTitle>
           </div>
           <DialogDescription className="text-xs sm:text-sm" style={{ color: '#cccccc' }}>
-            Define la tecnología principal y opciones adicionales para que el sistema planifique tu curso personalizado.
+            Define la tecnología principal y opciones adicionales para que Atlas planifique tu curso personalizado.
           </DialogDescription>
         </DialogHeader>
 
@@ -140,8 +140,8 @@ export function CrearCursoModal({ open, onOpenChange, onCrearCurso }: CrearCurso
                       type="text"
                       placeholder="Ej: React, Python, Next.js, Laravel, etc."
                       className="h-10 sm:h-11 text-sm sm:text-base"
-                      style={{ 
-                        background: 'rgba(255, 255, 255, 0.1)', 
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.1)',
                         borderColor: '#00A3E2',
                         color: '#ffffff'
                       }}
@@ -164,10 +164,10 @@ export function CrearCursoModal({ open, onOpenChange, onCrearCurso }: CrearCurso
                   </FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
-                      <SelectTrigger 
+                      <SelectTrigger
                         className="h-10 sm:h-11 text-sm sm:text-base"
-                        style={{ 
-                          background: 'rgba(255, 255, 255, 0.1)', 
+                        style={{
+                          background: 'rgba(255, 255, 255, 0.1)',
                           borderColor: '#00A3E2',
                           color: field.value ? '#ffffff' : '#999999'
                         }}
@@ -175,25 +175,25 @@ export function CrearCursoModal({ open, onOpenChange, onCrearCurso }: CrearCurso
                         <SelectValue placeholder="Selecciona el nivel de dificultad" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent 
-                      style={{ 
-                        background: '#262422', 
+                    <SelectContent
+                      style={{
+                        background: '#262422',
                         borderColor: '#00A3E2'
                       }}
                     >
-                      <SelectItem 
+                      <SelectItem
                         value="basico"
                         style={{ color: '#ffffff' }}
                       >
                         Básico
                       </SelectItem>
-                      <SelectItem 
+                      <SelectItem
                         value="intermedio"
                         style={{ color: '#ffffff' }}
                       >
                         Intermedio
                       </SelectItem>
-                      <SelectItem 
+                      <SelectItem
                         value="avanzado"
                         style={{ color: '#ffffff' }}
                       >
@@ -220,8 +220,8 @@ export function CrearCursoModal({ open, onOpenChange, onCrearCurso }: CrearCurso
                       placeholder="Ej: Quiero aprender React para desarrollar una aplicaciones web para la universidad y mejorar mis habilidades en el fronted"
                       rows={4}
                       className="text-sm sm:text-base"
-                      style={{ 
-                        background: 'rgba(255, 255, 255, 0.1)', 
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.1)',
                         borderColor: '#00A3E2',
                         color: '#ffffff',
                         resize: 'none'
@@ -243,7 +243,7 @@ export function CrearCursoModal({ open, onOpenChange, onCrearCurso }: CrearCurso
                 id="configuracionAvanzada"
                 checked={configuracionAvanzada}
                 onCheckedChange={handleConfiguracionAvanzadaChange}
-                style={{ 
+                style={{
                   borderColor: '#00A3E2',
                 }}
               />
@@ -260,196 +260,196 @@ export function CrearCursoModal({ open, onOpenChange, onCrearCurso }: CrearCurso
             {configuracionAvanzada && (
               <>
                 {/* Campo Herramientas Indispensables */}
-            <FormField
-              control={form.control}
-              name="indispensables"
-              render={({ field }) => {
-                const [inputValue, setInputValue] = useState('');
-                const values = field.value || [];
+                <FormField
+                  control={form.control}
+                  name="indispensables"
+                  render={({ field }) => {
+                    const [inputValue, setInputValue] = useState('');
+                    const values = field.value || [];
 
-                const handleAdd = () => {
-                  if (inputValue.trim()) {
-                    field.onChange([...values, inputValue.trim()]);
-                    setInputValue('');
-                  }
-                };
+                    const handleAdd = () => {
+                      if (inputValue.trim()) {
+                        field.onChange([...values, inputValue.trim()]);
+                        setInputValue('');
+                      }
+                    };
 
-                const handleRemove = (index: number) => {
-                  field.onChange(values.filter((_, i) => i !== index));
-                };
+                    const handleRemove = (index: number) => {
+                      field.onChange(values.filter((_, i) => i !== index));
+                    };
 
-                return (
-                  <FormItem>
-                    <FormLabel className="text-xs sm:text-sm" style={{ color: '#ffffff' }}>
-                      Indispensables para este Curso (Opcional)
-                    </FormLabel>
-                    <FormControl>
-                      <div className="space-y-2">
-                        <div className="flex gap-2">
-                          <Input
-                            type="text"
-                            placeholder="Ej: Manejo de estados, API REST, CRUD, etc."
-                            value={inputValue}
-                            onChange={(e) => setInputValue(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault();
-                                handleAdd();
-                              }
-                            }}
-                            className="text-sm sm:text-base"
-                            style={{ 
-                              background: 'rgba(255, 255, 255, 0.1)', 
-                              borderColor: '#00A3E2',
-                              color: '#ffffff'
-                            }}
-                          />
-                          <Button
-                            type="button"
-                            onClick={handleAdd}
-                            disabled={!inputValue.trim()}
-                            className="px-3"
-                            style={{ 
-                              background: inputValue.trim() ? '#00A3E2' : 'rgba(0, 163, 226, 0.5)',
-                              color: '#ffffff',
-                              border: 'none'
-                            }}
-                          >
-                            <Plus className="w-4 h-4" />
-                          </Button>
-                        </div>
-                        {values.length > 0 && (
-                          <div className="flex flex-wrap gap-2">
-                            {values.map((value, index) => (
-                              <div
-                                key={index}
-                                className="flex items-center gap-1 px-2 py-1 rounded"
+                    return (
+                      <FormItem>
+                        <FormLabel className="text-xs sm:text-sm" style={{ color: '#ffffff' }}>
+                          Indispensables para este Curso (Opcional)
+                        </FormLabel>
+                        <FormControl>
+                          <div className="space-y-2">
+                            <div className="flex gap-2">
+                              <Input
+                                type="text"
+                                placeholder="Ej: Manejo de estados, API REST, CRUD, etc."
+                                value={inputValue}
+                                onChange={(e) => setInputValue(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    handleAdd();
+                                  }
+                                }}
+                                className="text-sm sm:text-base"
                                 style={{
-                                  background: 'rgba(0, 163, 226, 0.2)',
-                                  border: '1px solid #00A3E2'
+                                  background: 'rgba(255, 255, 255, 0.1)',
+                                  borderColor: '#00A3E2',
+                                  color: '#ffffff'
+                                }}
+                              />
+                              <Button
+                                type="button"
+                                onClick={handleAdd}
+                                disabled={!inputValue.trim()}
+                                className="px-3"
+                                style={{
+                                  background: inputValue.trim() ? '#00A3E2' : 'rgba(0, 163, 226, 0.5)',
+                                  color: '#ffffff',
+                                  border: 'none'
                                 }}
                               >
-                                <span className="text-xs sm:text-sm" style={{ color: '#ffffff' }}>
-                                  {value}
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={() => handleRemove(index)}
-                                  className="ml-1 hover:opacity-70"
-                                  style={{ color: '#ffffff' }}
-                                >
-                                  <X className="w-3 h-3" />
-                                </button>
+                                <Plus className="w-4 h-4" />
+                              </Button>
+                            </div>
+                            {values.length > 0 && (
+                              <div className="flex flex-wrap gap-2">
+                                {values.map((value, index) => (
+                                  <div
+                                    key={index}
+                                    className="flex items-center gap-1 px-2 py-1 rounded"
+                                    style={{
+                                      background: 'rgba(0, 163, 226, 0.2)',
+                                      border: '1px solid #00A3E2'
+                                    }}
+                                  >
+                                    <span className="text-xs sm:text-sm" style={{ color: '#ffffff' }}>
+                                      {value}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRemove(index)}
+                                      className="ml-1 hover:opacity-70"
+                                      style={{ color: '#ffffff' }}
+                                    >
+                                      <X className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                ))}
                               </div>
-                            ))}
+                            )}
                           </div>
-                        )}
-                      </div>
-                    </FormControl>
-                    <p className="text-xs" style={{ color: '#999999' }}>
-                      Lista las herramientas, frameworks o librerías que deben incluirse en el curso
-                    </p>
-                    <FormMessage />
-                  </FormItem>
-                );
-              }}
-            />
+                        </FormControl>
+                        <p className="text-xs" style={{ color: '#999999' }}>
+                          Lista las herramientas, frameworks o librerías que deben incluirse en el curso
+                        </p>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
+                />
 
-            {/* Campo Conocimientos Previos */}
-            <FormField
-              control={form.control}
-              name="conocimientosPrevios"
-              render={({ field }) => {
-                const [inputValue, setInputValue] = useState('');
-                const values = field.value || [];
+                {/* Campo Conocimientos Previos */}
+                <FormField
+                  control={form.control}
+                  name="conocimientosPrevios"
+                  render={({ field }) => {
+                    const [inputValue, setInputValue] = useState('');
+                    const values = field.value || [];
 
-                const handleAdd = () => {
-                  if (inputValue.trim()) {
-                    field.onChange([...values, inputValue.trim()]);
-                    setInputValue('');
-                  }
-                };
+                    const handleAdd = () => {
+                      if (inputValue.trim()) {
+                        field.onChange([...values, inputValue.trim()]);
+                        setInputValue('');
+                      }
+                    };
 
-                const handleRemove = (index: number) => {
-                  field.onChange(values.filter((_, i) => i !== index));
-                };
+                    const handleRemove = (index: number) => {
+                      field.onChange(values.filter((_, i) => i !== index));
+                    };
 
-                return (
-                  <FormItem>
-                    <FormLabel className="text-xs sm:text-sm" style={{ color: '#ffffff' }}>
-                      Conocimientos Previos del Usuario (Opcional)
-                    </FormLabel>
-                    <FormControl>
-                      <div className="space-y-2">
-                        <div className="flex gap-2">
-                          <Input
-                            type="text"
-                            placeholder="Ej: HTML básico, CSS intermedio, JavaScript básico, etc."
-                            value={inputValue}
-                            onChange={(e) => setInputValue(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault();
-                                handleAdd();
-                              }
-                            }}
-                            className="text-sm sm:text-base"
-                            style={{ 
-                              background: 'rgba(255, 255, 255, 0.1)', 
-                              borderColor: '#00A3E2',
-                              color: '#ffffff'
-                            }}
-                          />
-                          <Button
-                            type="button"
-                            onClick={handleAdd}
-                            disabled={!inputValue.trim()}
-                            className="px-3"
-                            style={{ 
-                              background: inputValue.trim() ? '#00A3E2' : 'rgba(0, 163, 226, 0.5)',
-                              color: '#ffffff',
-                              border: 'none'
-                            }}
-                          >
-                            <Plus className="w-4 h-4" />
-                          </Button>
-                        </div>
-                        {values.length > 0 && (
-                          <div className="flex flex-wrap gap-2">
-                            {values.map((value, index) => (
-                              <div
-                                key={index}
-                                className="flex items-center gap-1 px-2 py-1 rounded"
+                    return (
+                      <FormItem>
+                        <FormLabel className="text-xs sm:text-sm" style={{ color: '#ffffff' }}>
+                          Conocimientos Previos del Usuario (Opcional)
+                        </FormLabel>
+                        <FormControl>
+                          <div className="space-y-2">
+                            <div className="flex gap-2">
+                              <Input
+                                type="text"
+                                placeholder="Ej: HTML básico, CSS intermedio, JavaScript básico, etc."
+                                value={inputValue}
+                                onChange={(e) => setInputValue(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    handleAdd();
+                                  }
+                                }}
+                                className="text-sm sm:text-base"
                                 style={{
-                                  background: 'rgba(0, 163, 226, 0.2)',
-                                  border: '1px solid #00A3E2'
+                                  background: 'rgba(255, 255, 255, 0.1)',
+                                  borderColor: '#00A3E2',
+                                  color: '#ffffff'
+                                }}
+                              />
+                              <Button
+                                type="button"
+                                onClick={handleAdd}
+                                disabled={!inputValue.trim()}
+                                className="px-3"
+                                style={{
+                                  background: inputValue.trim() ? '#00A3E2' : 'rgba(0, 163, 226, 0.5)',
+                                  color: '#ffffff',
+                                  border: 'none'
                                 }}
                               >
-                                <span className="text-xs sm:text-sm" style={{ color: '#ffffff' }}>
-                                  {value}
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={() => handleRemove(index)}
-                                  className="ml-1 hover:opacity-70"
-                                  style={{ color: '#ffffff' }}
-                                >
-                                  <X className="w-3 h-3" />
-                                </button>
+                                <Plus className="w-4 h-4" />
+                              </Button>
+                            </div>
+                            {values.length > 0 && (
+                              <div className="flex flex-wrap gap-2">
+                                {values.map((value, index) => (
+                                  <div
+                                    key={index}
+                                    className="flex items-center gap-1 px-2 py-1 rounded"
+                                    style={{
+                                      background: 'rgba(0, 163, 226, 0.2)',
+                                      border: '1px solid #00A3E2'
+                                    }}
+                                  >
+                                    <span className="text-xs sm:text-sm" style={{ color: '#ffffff' }}>
+                                      {value}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRemove(index)}
+                                      className="ml-1 hover:opacity-70"
+                                      style={{ color: '#ffffff' }}
+                                    >
+                                      <X className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                ))}
                               </div>
-                            ))}
+                            )}
                           </div>
-                        )}
-                      </div>
-                    </FormControl>
-                    <p className="text-xs" style={{ color: '#999999' }}>
-                      Describe tu nivel de experiencia y qué conocimientos ya tienes sobre este tema
-                    </p>
-                    <FormMessage />
-                  </FormItem>
-                );
-              }}
-            />
+                        </FormControl>
+                        <p className="text-xs" style={{ color: '#999999' }}>
+                          Describe tu nivel de experiencia y qué conocimientos ya tienes sobre este tema
+                        </p>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
+                />
 
                 {/* Campo Tecnologías Fuera del Alcance */}
                 <FormField
@@ -490,8 +490,8 @@ export function CrearCursoModal({ open, onOpenChange, onCrearCurso }: CrearCurso
                                   }
                                 }}
                                 className="text-sm sm:text-base"
-                                style={{ 
-                                  background: 'rgba(255, 255, 255, 0.1)', 
+                                style={{
+                                  background: 'rgba(255, 255, 255, 0.1)',
                                   borderColor: '#00A3E2',
                                   color: '#ffffff'
                                 }}
@@ -501,7 +501,7 @@ export function CrearCursoModal({ open, onOpenChange, onCrearCurso }: CrearCurso
                                 onClick={handleAdd}
                                 disabled={!inputValue.trim()}
                                 className="px-3"
-                                style={{ 
+                                style={{
                                   background: inputValue.trim() ? '#00A3E2' : 'rgba(0, 163, 226, 0.5)',
                                   color: '#ffffff',
                                   border: 'none'
@@ -554,11 +554,12 @@ export function CrearCursoModal({ open, onOpenChange, onCrearCurso }: CrearCurso
                 type="button"
                 variant="outline"
                 onClick={handleCancel}
-                className="w-full sm:w-auto text-sm sm:text-base"
-                style={{ 
-                  background: 'rgba(255, 255, 255, 0.1)', 
+                className="w-full sm:w-auto text-sm sm:text-base hover:!bg-cyan-800"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.1)',
                   borderColor: '#00A3E2',
-                  color: '#ffffff'
+                  color: '#ffffff',
+                  cursor: 'pointer'
                 }}
               >
                 Cancelar
@@ -566,14 +567,14 @@ export function CrearCursoModal({ open, onOpenChange, onCrearCurso }: CrearCurso
               <Button
                 type="submit"
                 disabled={!form.watch('tecnologiaPrincipal') || !form.watch('dificultad') || !form.watch('razonCurso')}
-                className="w-full sm:w-auto text-sm sm:text-base"
-                style={{ 
-                  background: form.watch('tecnologiaPrincipal') && form.watch('dificultad') && form.watch('razonCurso') ? '#00A3E2' : 'rgba(0, 163, 226, 0.5)', 
+                className="w-full sm:w-auto text-sm sm:text-base hover:shadow-[0_0_20px_rgba(0,162,226,0.53)] bg-gradient-to-r from-cyan-500 to-blue-700 hover:from-cyan-900 hover:to-blue-700 border-[#00A3E2] transition-all duration-300"
+                style={{
+                  background: form.watch('tecnologiaPrincipal') && form.watch('dificultad') && form.watch('razonCurso') ? '#00A3E2' : 'rgba(0, 163, 226, 0.5)',
                   color: '#ffffff',
                   cursor: !form.watch('tecnologiaPrincipal') || !form.watch('dificultad') || !form.watch('razonCurso') ? 'not-allowed' : 'pointer'
                 }}
               >
-                Crear Lección
+                Crear Curso
               </Button>
             </DialogFooter>
           </form>

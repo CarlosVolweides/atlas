@@ -19,7 +19,7 @@ import { useSubtopicStarted } from '@/hooks/useSubtopic';
 import { toast } from "sonner";
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 import MarkdownSkeleton from '@/components/MarkdownSkeleton';
-import { ReturnButton } from '@/components/ui/ButtonsAnimated';
+import { ReturnButton, SparkleButton } from '@/components/ui/ButtonsAnimated';
 
 type FlatSubtopic = {
   globalIndex: number
@@ -415,7 +415,7 @@ export default function LeccionViewer() {
             height="h-8"
             fontSize="text-lg"
             buttonColor="#00a2e207"
-            containerColor="bg-cyan-500"                      
+            containerColor="#ffffffff"                     
             textColor="#ffffffff" 
             >
             Volver
@@ -663,19 +663,17 @@ export default function LeccionViewer() {
                     {/* Botón de generar subtema */}
                     {estadosSubtemas[subtemaActual] == 'vacio' && (
                       <div>
-                        <Button
+                        
+                        <SparkleButton
                           onClick={handleGenerarSubtema}
-                          variant="outline"
-                          className="w-full text-sm md:text-base"
-                          style={{
-                            background: 'rgba(255, 255, 255, 0.05)',
-                            borderColor: '#00A3E2',
-                            color: '#ffffff'
-                          }}
+                          disabled={subtopicIsLoading}
+                          className='mx-auto w-[350px] text-sm md:text-base h-12 rounded-xl bg-[#ffffff0d] border-1 border-solid border-[#00A3E2]'
+                          hoverFrom='#00A3E2'
+                          hoverTo='#0078e2ff'
+                          shadowColor='#00A3E2'
                         >
-                          <ClipboardList className="w-4 h-4 mr-2" />
                           Comenzar Lección
-                        </Button>
+                        </SparkleButton>
 
                         {subtopicIsLoading && (
                           <p
