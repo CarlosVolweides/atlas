@@ -728,47 +728,45 @@ export default function LeccionViewer() {
                       </h2>
                       <div className="flex items-center gap-2">
                         {estadosSubtemas[subtemaActual] === 'aprobado' || estadosSubtemas[subtemaActual] === 'completado' ? (
-                          <>
-                            <div className="flex items-center gap-2 px-3 py-1 rounded-full self-start" style={{ background: 'rgba(0, 163, 226, 0.2)' }}>
-                              <CheckCircle2 className="w-4 h-4" style={{ color: '#00A3E2' }} />
-                              <span className="text-sm" style={{ color: '#00A3E2' }}>Completado</span>
-                            </div>
-                            {!streamingHook.isLoading && !subtopicIsLoading && (
-                              <div className="flex items-center gap-2">
-                                <Button
-                                  onClick={handleRecargarSubtema}
-                                  variant="outline"
-                                  size="sm"
-                                  className="flex items-center gap-2"
-                                  style={{
-                                    background: 'rgba(255, 255, 255, 0.1)',
-                                    borderColor: '#00A3E2',
-                                    color: '#ffffff'
-                                  }}
-                                  title="Recargar contenido desde la base de datos"
-                                >
-                                  <RotateCcw className="w-4 h-4" />
-                                  <span className="text-xs md:text-sm">Recargar</span>
-                                </Button>
-                                <Button
-                                  onClick={handleRegenerarSubtema}
-                                  variant="outline"
-                                  size="sm"
-                                  className="flex items-center gap-2"
-                                  style={{
-                                    background: 'rgba(255, 255, 255, 0.1)',
-                                    borderColor: '#00A3E2',
-                                    color: '#ffffff'
-                                  }}
-                                  title="Regenerar contenido de este subtema (llama a la API)"
-                                >
-                                  <RefreshCw className="w-4 h-4" />
-                                  <span className="text-xs md:text-sm">Regenerar</span>
-                                </Button>
-                              </div>
-                            )}
-                          </>
+                          <div className="flex items-center gap-2 px-3 py-1 rounded-full self-start" style={{ background: 'rgba(0, 163, 226, 0.2)' }}>
+                            <CheckCircle2 className="w-4 h-4" style={{ color: '#00A3E2' }} />
+                            <span className="text-sm" style={{ color: '#00A3E2' }}>Completado</span>
+                          </div>
                         ) : null}
+                        {!streamingHook.isLoading && !subtopicIsLoading && (estadosSubtemas[subtemaActual] === 'aprobado' || estadosSubtemas[subtemaActual] === 'completado' || estadosSubtemas[subtemaActual] === 'pendiente') && (
+                          <div className="flex items-center gap-2">
+                            <Button
+                              onClick={handleRecargarSubtema}
+                              variant="outline"
+                              size="sm"
+                              className="flex items-center gap-2"
+                              style={{
+                                background: 'rgba(255, 255, 255, 0.1)',
+                                borderColor: '#00A3E2',
+                                color: '#ffffff'
+                              }}
+                              title="Recargar contenido desde la base de datos"
+                            >
+                              <RotateCcw className="w-4 h-4" />
+                              <span className="text-xs md:text-sm">Recargar</span>
+                            </Button>
+                            <Button
+                              onClick={handleRegenerarSubtema}
+                              variant="outline"
+                              size="sm"
+                              className="flex items-center gap-2"
+                              style={{
+                                background: 'rgba(255, 255, 255, 0.1)',
+                                borderColor: '#00A3E2',
+                                color: '#ffffff'
+                              }}
+                              title="Regenerar contenido de este subtema (llama a la API)"
+                            >
+                              <RefreshCw className="w-4 h-4" />
+                              <span className="text-xs md:text-sm">Regenerar</span>
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     </div>
                     <div className="text-xs md:text-sm" style={{ color: '#cccccc' }}>
