@@ -244,7 +244,10 @@ export default function LeccionViewer() {
       subtopic: {
         title: subtopic.title,
         description: ''
-      }
+      },
+      courseId: courseId,
+      moduleOrder: subtopic.moduleOrder,
+      subtopicOrder: subtopic.subtopicOrder
     })
   }
 

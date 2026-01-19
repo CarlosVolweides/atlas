@@ -2,6 +2,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { useMutation, useQueryClient } from 'react-query';
 import { ApiServices } from '@/lib/services/api';
+import { ContextService } from '@/lib/services/context';
 import { toast } from 'sonner';
 
 interface SubtopicParams {
@@ -74,8 +75,8 @@ export const useSubtopicStreaming = () => {
   const [data, setData] = useState<SubtopicStartedResponse | null>(null);
   const readerRef = useRef<ReadableStreamDefaultReader<Uint8Array> | null>(null);
 
-  const mutation = useMutation<SubtopicStartedResponse, Error, Omit<SubtopicParams, 'courseId' | 'moduleOrder' | 'subtopicOrder' | 'hasContent'>>({
-    mutationFn: async ({ knowledgeProfile, subtopic }) => {
+  const mutation = useMutation<SubtopicStartedResponse, Error, Omit<SubtopicParams, 'hasContent'>>({
+    mutationFn: async ({ knowledgeProfile, subtopic, courseId, moduleOrder, subtopicOrder }) => {
       // Resetear contenido y datos
       setContent('');
       setData(null);
@@ -83,7 +84,10 @@ export const useSubtopicStreaming = () => {
       // Obtener el stream
       const stream = await ApiServices.subtopicStartedStreaming.create(
         knowledgeProfile,
-        subtopic
+        subtopic,
+        courseId,
+        moduleOrder,
+        subtopicOrder
       );
 
       // Obtener el reader
@@ -172,6 +176,27 @@ export const useSubtopicStreaming = () => {
             estimated_read_time_min: undefined
           };
           setContent('');
+        }
+      }
+
+      // Guardar el contenido en la base de datos después de parsear exitosamente
+      if (parsedData && parsedData.content && parsedData.content.trim().length > 0) {
+        try {
+          await ContextService.postContext(
+            courseId,
+            moduleOrder,
+            subtopicOrder,
+            {
+              title: parsedData.title,
+              content: parsedData.content,
+              estimated_read_time_min: parsedData.estimated_read_time_min
+            }
+          );
+          console.log('Contenido del subtopic guardado exitosamente');
+        } catch (saveError) {
+          console.error('Error al guardar el contenido del subtopic:', saveError);
+          // No lanzar el error para no romper el flujo del streaming
+          toast.error('El contenido se generó pero no se pudo guardar. Intenta nuevamente.');
         }
       }
 
