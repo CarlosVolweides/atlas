@@ -210,12 +210,11 @@ export default function DetalleCursoPage() {
           <ReturnButton          
             onClick={handleVolver}
             className="gap-2 mb-6"
-            width="w-40"
+            width="w-36"
             height="h-8"
             fontSize="text-lg"
             buttonColor="#00a2e207"
-            containerColor="bg-cyan-400"
-            borderColor="white"
+            containerColor="#ffffffff"
             textColor="#ffffffff"
             >
             Volver

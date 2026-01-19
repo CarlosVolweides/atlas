@@ -663,19 +663,8 @@ export default function LeccionViewer() {
                     {/* Botón de generar subtema */}
                     {estadosSubtemas[subtemaActual] == 'vacio' && (
                       <div>
-
-                        <SparkleButton
-                          onClick={handleGenerarSubtema}
-                          disabled={subtopicIsLoading}
-                          className='mx-auto w-[350px] text-sm md:text-base h-12 rounded-xl bg-[#ffffff0d] border-1 border-solid border-[#00A3E2]'
-                          hoverFrom='#00A3E2'
-                          hoverTo='#0078e2ff'
-                          shadowColor='#00A3E2'
-                        >
-                          Comenzar Lección
-                        </SparkleButton>
-
-                        {subtopicIsLoading && (
+                        
+                        {subtopicIsLoading ? (
                           <p
                             className="w-full text-sm md:text-base"
                             style={{
@@ -685,7 +674,17 @@ export default function LeccionViewer() {
                             Cargando Contenido...
                           </p>
 
-                        )}
+                        ) : !isGenerating &&
+                        <SparkleButton
+                          onClick={handleGenerarSubtema}
+                          disabled={subtopicIsLoading}
+                          className='mx-auto w-[350px] text-sm md:text-base h-12 rounded-xl bg-[#ffffff0d] border-1 border-solid border-[#00A3E2]'
+                          hoverFrom='#00A3E2'
+                          hoverTo='#0078e2ff'
+                          shadowColor='#00A3E2'
+                        >
+                          Comenzar Lección
+                        </SparkleButton>}
                       </div>
                     )}
 
