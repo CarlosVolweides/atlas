@@ -35,13 +35,30 @@ export const useSubtopicStarted = () => {
   });
 };
 
+// Helper function para normalizar saltos de línea y otros escapes en el contenido
+const normalizeContentEscapes = (content: string): string => {
+  if (!content || typeof content !== 'string') {
+    return content;
+  }
+  
+  // Reemplazar escapes JSON comunes por sus caracteres reales
+  return content
+    .replace(/\\n/g, '\n')           // \n -> salto de línea real
+    .replace(/\\r/g, '\r')           // \r -> retorno de carro
+    .replace(/\\t/g, '\t')           // \t -> tabulación
+    .replace(/\\"/g, '"')            // \" -> comilla doble
+    .replace(/\\'/g, "'")            // \' -> comilla simple
+    .replace(/\\\\/g, '\\');         // \\ -> backslash
+};
+
 // Helper function para extraer content de JSON parcial usando regex
 const extractContentFromPartialJson = (jsonString: string): string | null => {
   try {
     // Intentar parsear el JSON completo primero
     const parsed = JSON.parse(jsonString);
     if (parsed && typeof parsed === 'object' && typeof parsed.content === 'string') {
-      return parsed.content;
+      // Normalizar escapes en el contenido parseado
+      return normalizeContentEscapes(parsed.content);
     }
   } catch {
     // Si falla, intentar extraer el campo content usando regex
@@ -50,21 +67,18 @@ const extractContentFromPartialJson = (jsonString: string): string | null => {
     if (contentMatch && contentMatch[1]) {
       // Decodificar escapes JSON
       try {
-        return JSON.parse(`"${contentMatch[1]}"`);
+        const decoded = JSON.parse(`"${contentMatch[1]}"`);
+        return normalizeContentEscapes(decoded);
       } catch {
-        return contentMatch[1];
+        return normalizeContentEscapes(contentMatch[1]);
       }
     }
     
     // Alternativa: buscar content con regex más flexible para JSON incompleto
     const flexibleMatch = jsonString.match(/"content"\s*:\s*"((?:[^"\\]|\\.|")*)/);
     if (flexibleMatch && flexibleMatch[1]) {
-      // Intentar decodificar, removiendo escapes
-      return flexibleMatch[1]
-        .replace(/\\n/g, '\n')
-        .replace(/\\t/g, '\t')
-        .replace(/\\"/g, '"')
-        .replace(/\\\\/g, '\\');
+      // Normalizar escapes usando la función helper
+      return normalizeContentEscapes(flexibleMatch[1]);
     }
   }
   return null;
@@ -113,9 +127,10 @@ export const useSubtopicStreaming = () => {
         // Intentar extraer solo el campo content del JSON parcial
         const extractedContent = extractContentFromPartialJson(accumulatedJson);
         if (extractedContent !== null && extractedContent.trim().length > 0) {
-          // Actualizar content con solo el markdown extraído
-          lastValidContent = extractedContent;
-          setContent(extractedContent);
+          // Normalizar escapes y actualizar content con solo el markdown extraído
+          const normalizedContent = normalizeContentEscapes(extractedContent);
+          lastValidContent = normalizedContent;
+          setContent(normalizedContent);
         }
         // Si no se puede extraer, no actualizar content (mantener el último contenido válido)
         // Esto evita mostrar JSON crudo durante el streaming
@@ -143,22 +158,27 @@ export const useSubtopicStreaming = () => {
           parsedData.title = subtopic.title;
         }
         
-        // Actualizar content con el contenido final parseado
+        // Normalizar escapes en el contenido (convertir \n a saltos de línea reales)
+        parsedData.content = normalizeContentEscapes(parsedData.content);
+        
+        // Actualizar content con el contenido final parseado y normalizado
         setContent(parsedData.content);
         
       } catch (parseError) {
         // Si falla el parsing, intentar extraer content con el helper
         const extractedContent = extractContentFromPartialJson(accumulatedJson);
         if (extractedContent && extractedContent.trim().length > 0) {
-          // Si se puede extraer contenido válido, usarlo
+          // Normalizar escapes y usar el contenido extraído
+          const normalizedContent = normalizeContentEscapes(extractedContent);
           parsedData = {
             title: subtopic.title,
-            content: extractedContent,
+            content: normalizedContent,
             estimated_read_time_min: undefined
           };
-          setContent(extractedContent);
+          setContent(normalizedContent);
         } else if (lastValidContent.trim().length > 0) {
           // Si no se puede extraer pero tenemos contenido válido previo, usarlo
+          // (ya está normalizado porque se normalizó cuando se estableció)
           console.warn('Error al parsear JSON del stream, usando último contenido válido extraído:', parseError);
           parsedData = {
             title: subtopic.title,
