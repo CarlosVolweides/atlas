@@ -1,19 +1,19 @@
 import "dotenv/config";
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY;
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_PUBLISHABLE_DEFAULT_KEY;
 
 async function migrateTecnologiaToTitulo() {
   console.log("🔄 Iniciando migración de tecnologia a titulo...\n");
 
   if (!supabaseUrl) {
-    console.error("❌ Error: NEXT_PUBLIC_SUPABASE_URL no está definida en las variables de entorno");
+    console.error("❌ Error: SUPABASE_URL no está definida en las variables de entorno");
     process.exit(1);
   }
 
   if (!supabaseKey) {
-    console.error("❌ Error: NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY no está definida en las variables de entorno");
+    console.error("❌ Error: SUPABASE_PUBLISHABLE_DEFAULT_KEY no está definida en las variables de entorno");
     process.exit(1);
   }
 
