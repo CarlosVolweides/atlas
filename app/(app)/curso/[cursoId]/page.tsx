@@ -9,7 +9,8 @@ import {
   ClipboardList, ChevronRight,
   ChevronDown,
   ChevronUp,
-  RefreshCw
+  RefreshCw,
+  RotateCcw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -18,6 +19,7 @@ import { ModuleTemaryI, EstadoSubtema, ordenSubtema } from '@/types/course';
 import { useTemary, useContextSubtopic, useUpdateSubtemaEstado, useCourseInfo } from '@/hooks/useCourse';
 import { useSubtopicStarted, useSubtopicStreaming } from '@/hooks/useSubtopic';
 import { toast } from "sonner";
+import { useQueryClient } from 'react-query';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 import MarkdownSkeleton from '@/components/MarkdownSkeleton';
 import { ReturnButton, SparkleButton } from '@/components/ui/ButtonsAnimated';
@@ -33,6 +35,7 @@ type FlatSubtopic = {
 export default function LeccionViewer() {
   const router = useRouter();
   const params = useParams();
+  const queryClient = useQueryClient();
   const courseId = parseInt(params?.cursoId as string || '0');
   const { data: temaryData } = useTemary(courseId, { enabled: courseId > 0 });
   const idCurso = parseInt(params?.cursoId as string);
@@ -280,6 +283,23 @@ export default function LeccionViewer() {
       moduleOrder: subtopic.moduleOrder,
       subtopicOrder: subtopic.subtopicOrder
     })
+  }
+
+  const handleRecargarSubtema = () => {
+    if (subtemaActual === null || !flatSubtopics[subtemaActual]) return
+
+    const subtopic = flatSubtopics[subtemaActual]
+
+    if (!subtopic) return
+
+    // Limpiar contenido generado temporalmente
+    setGeneratedContent(null)
+
+    // Invalidar la query de React Query para forzar la recarga desde la DB
+    const currentOrden = ordenActivo;
+    if (currentOrden && currentOrden.mod !== null && currentOrden.sub !== null) {
+      queryClient.invalidateQueries(['subtopic-context', courseId, currentOrden.mod, currentOrden.sub]);
+    }
   }
 
   const handleSiguiente = async () => {
@@ -714,21 +734,38 @@ export default function LeccionViewer() {
                               <span className="text-sm" style={{ color: '#00A3E2' }}>Completado</span>
                             </div>
                             {!streamingHook.isLoading && !subtopicIsLoading && (
-                              <Button
-                                onClick={handleRegenerarSubtema}
-                                variant="outline"
-                                size="sm"
-                                className="flex items-center gap-2"
-                                style={{
-                                  background: 'rgba(255, 255, 255, 0.1)',
-                                  borderColor: '#00A3E2',
-                                  color: '#ffffff'
-                                }}
-                                title="Regenerar contenido de este subtema"
-                              >
-                                <RefreshCw className="w-4 h-4" />
-                                <span className="text-xs md:text-sm">Regenerar</span>
-                              </Button>
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  onClick={handleRecargarSubtema}
+                                  variant="outline"
+                                  size="sm"
+                                  className="flex items-center gap-2"
+                                  style={{
+                                    background: 'rgba(255, 255, 255, 0.1)',
+                                    borderColor: '#00A3E2',
+                                    color: '#ffffff'
+                                  }}
+                                  title="Recargar contenido desde la base de datos"
+                                >
+                                  <RotateCcw className="w-4 h-4" />
+                                  <span className="text-xs md:text-sm">Recargar</span>
+                                </Button>
+                                <Button
+                                  onClick={handleRegenerarSubtema}
+                                  variant="outline"
+                                  size="sm"
+                                  className="flex items-center gap-2"
+                                  style={{
+                                    background: 'rgba(255, 255, 255, 0.1)',
+                                    borderColor: '#00A3E2',
+                                    color: '#ffffff'
+                                  }}
+                                  title="Regenerar contenido de este subtema (llama a la API)"
+                                >
+                                  <RefreshCw className="w-4 h-4" />
+                                  <span className="text-xs md:text-sm">Regenerar</span>
+                                </Button>
+                              </div>
                             )}
                           </>
                         ) : null}
