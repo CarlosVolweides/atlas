@@ -1,5 +1,5 @@
 // hooks/useSubtopic.ts
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useMutation, useQueryClient } from 'react-query';
 import { ApiServices } from '@/lib/services/api';
 import { ContextService } from '@/lib/services/context';
@@ -85,15 +85,101 @@ const extractContentFromPartialJson = (jsonString: string): string | null => {
 };
 
 export const useSubtopicStreaming = () => {
-  const [content, setContent] = useState<string>('');
+  const [rawContent, setRawContent] = useState<string>(''); // Contenido completo del stream
+  const [displayedContent, setDisplayedContent] = useState<string>(''); // Contenido mostrado (suavizado)
+  const [isStreaming, setIsStreaming] = useState<boolean>(false); // Estado para controlar el streaming
   const [data, setData] = useState<SubtopicStartedResponse | null>(null);
   const readerRef = useRef<ReadableStreamDefaultReader<Uint8Array> | null>(null);
+  const typewriterIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const displayedIndexRef = useRef<number>(0);
+  const rawContentRef = useRef<string>(''); // Ref para acceder al contenido más reciente en el intervalo
+
+  // Actualizar la ref cuando cambia rawContent
+  useEffect(() => {
+    rawContentRef.current = rawContent;
+  }, [rawContent]);
+
+  // Efecto para suavizar la aparición del texto (typewriter effect)
+  useEffect(() => {
+    // Si no hay contenido, limpiar y salir
+    if (!rawContent) {
+      setDisplayedContent('');
+      displayedIndexRef.current = 0;
+      rawContentRef.current = '';
+      if (typewriterIntervalRef.current) {
+        clearInterval(typewriterIntervalRef.current);
+        typewriterIntervalRef.current = null;
+      }
+      return;
+    }
+
+    // Si no está streaming, mostrar todo el contenido de inmediato
+    if (!isStreaming) {
+      setDisplayedContent(rawContent);
+      displayedIndexRef.current = rawContent.length;
+      if (typewriterIntervalRef.current) {
+        clearInterval(typewriterIntervalRef.current);
+        typewriterIntervalRef.current = null;
+      }
+      return;
+    }
+
+    // Si ya hay un intervalo corriendo, solo actualizar el contenido disponible
+    // El intervalo continuará mostrando progresivamente
+    if (typewriterIntervalRef.current) {
+      return;
+    }
+
+    // Calcular cuántos caracteres mostrar por frame
+    // Velocidad ajustable: más caracteres = más rápido, menos = más suave
+    const charsPerFrame = 8; // Mostrar 3 caracteres a la vez para suavidad
+    const frameDelay = 10; // ~60fps (16ms por frame)
+
+    typewriterIntervalRef.current = setInterval(() => {
+      const currentIndex = displayedIndexRef.current;
+      const currentRawContent = rawContentRef.current; // Usar ref para obtener el valor más reciente
+      
+      // Si ya mostramos todo el contenido disponible, esperar más contenido
+      if (currentIndex >= currentRawContent.length) {
+        // Si el streaming terminó, mostrar todo de inmediato y limpiar
+        if (!isStreaming) {
+          setDisplayedContent(currentRawContent);
+          displayedIndexRef.current = currentRawContent.length;
+          if (typewriterIntervalRef.current) {
+            clearInterval(typewriterIntervalRef.current);
+            typewriterIntervalRef.current = null;
+          }
+        }
+        return;
+      }
+
+      // Calcular nuevo índice (mostrar más caracteres)
+      const newIndex = Math.min(
+        currentIndex + charsPerFrame,
+        currentRawContent.length
+      );
+      
+      displayedIndexRef.current = newIndex;
+      setDisplayedContent(currentRawContent.substring(0, newIndex));
+    }, frameDelay);
+
+    // Cleanup
+    return () => {
+      if (typewriterIntervalRef.current) {
+        clearInterval(typewriterIntervalRef.current);
+        typewriterIntervalRef.current = null;
+      }
+    };
+  }, [rawContent, isStreaming]);
 
   const mutation = useMutation<SubtopicStartedResponse, Error, Omit<SubtopicParams, 'hasContent'>>({
     mutationFn: async ({ knowledgeProfile, subtopic, courseId, moduleOrder, subtopicOrder }) => {
       // Resetear contenido y datos
-      setContent('');
+      setRawContent('');
+      setDisplayedContent('');
+      displayedIndexRef.current = 0;
       setData(null);
+      setIsStreaming(true);
 
       // Obtener el stream
       const stream = await ApiServices.subtopicStartedStreaming.create(
@@ -127,10 +213,10 @@ export const useSubtopicStreaming = () => {
         // Intentar extraer solo el campo content del JSON parcial
         const extractedContent = extractContentFromPartialJson(accumulatedJson);
         if (extractedContent !== null && extractedContent.trim().length > 0) {
-          // Normalizar escapes y actualizar content con solo el markdown extraído
+          // Normalizar escapes y actualizar rawContent (el efecto typewriter se encargará de mostrarlo)
           const normalizedContent = normalizeContentEscapes(extractedContent);
           lastValidContent = normalizedContent;
-          setContent(normalizedContent);
+          setRawContent(normalizedContent);
         }
         // Si no se puede extraer, no actualizar content (mantener el último contenido válido)
         // Esto evita mostrar JSON crudo durante el streaming
@@ -161,8 +247,10 @@ export const useSubtopicStreaming = () => {
         // Normalizar escapes en el contenido (convertir \n a saltos de línea reales)
         parsedData.content = normalizeContentEscapes(parsedData.content);
         
-        // Actualizar content con el contenido final parseado y normalizado
-        setContent(parsedData.content);
+        // Actualizar rawContent con el contenido final parseado y normalizado
+        // El efecto typewriter mostrará el resto del contenido suavemente
+        setRawContent(parsedData.content);
+        setIsStreaming(false); // Marcar que el streaming terminó
         
       } catch (parseError) {
         // Si falla el parsing, intentar extraer content con el helper
@@ -175,7 +263,8 @@ export const useSubtopicStreaming = () => {
             content: normalizedContent,
             estimated_read_time_min: undefined
           };
-          setContent(normalizedContent);
+          setRawContent(normalizedContent);
+          setIsStreaming(false);
         } else if (lastValidContent.trim().length > 0) {
           // Si no se puede extraer pero tenemos contenido válido previo, usarlo
           // (ya está normalizado porque se normalizó cuando se estableció)
@@ -185,7 +274,8 @@ export const useSubtopicStreaming = () => {
             content: lastValidContent,
             estimated_read_time_min: undefined
           };
-          // No actualizar content aquí, ya está establecido con el último válido
+          setRawContent(lastValidContent);
+          setIsStreaming(false);
         } else {
           // Si no hay contenido válido, no establecer JSON crudo
           console.warn('Error al parsear JSON del stream, no se pudo extraer contenido válido:', parseError);
@@ -195,7 +285,8 @@ export const useSubtopicStreaming = () => {
             content: '',
             estimated_read_time_min: undefined
           };
-          setContent('');
+          setRawContent('');
+          setIsStreaming(false);
         }
       }
 
@@ -225,8 +316,11 @@ export const useSubtopicStreaming = () => {
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Error al generar la lección');
-      setContent('');
+      setRawContent('');
+      setDisplayedContent('');
+      displayedIndexRef.current = 0;
       setData(null);
+      setIsStreaming(false);
     },
   });
 
@@ -236,18 +330,27 @@ export const useSubtopicStreaming = () => {
       readerRef.current.releaseLock();
       readerRef.current = null;
     }
+    setIsStreaming(false);
+    // Limpiar el intervalo del typewriter
+    if (typewriterIntervalRef.current) {
+      clearInterval(typewriterIntervalRef.current);
+      typewriterIntervalRef.current = null;
+    }
   }, []);
 
   const reset = useCallback(() => {
     stop();
-    setContent('');
+    setRawContent('');
+    setDisplayedContent('');
+    displayedIndexRef.current = 0;
     setData(null);
+    setIsStreaming(false);
     mutation.reset();
   }, [stop, mutation]);
 
   return {
-    content,           // Contenido en tiempo real mientras se genera
-    data,              // Objeto completo parseado al finalizar
+    content: displayedContent,  // Contenido suavizado que se muestra progresivamente
+    data,                       // Objeto completo parseado al finalizar
     isLoading: mutation.isLoading,
     error: mutation.error,
     start: mutation.mutate,
