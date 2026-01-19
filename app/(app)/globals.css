@@ -1,4 +1,6 @@
 /*! tailwindcss v4.1.3 | MIT License | https://tailwindcss.com */
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
 @layer properties {
   @supports (((-webkit-hyphens: none)) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {
     *, :before, :after, ::backdrop {
@@ -1715,7 +1717,7 @@
   }
 
   .focus\:bg-accent:focus {
-    background-color: var(--accent);
+    background-color: var( --chart-3);
   }
 
   .focus\:text-accent-foreground:focus {
