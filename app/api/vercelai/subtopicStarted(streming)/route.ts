@@ -6,6 +6,34 @@ const GATEWAY_BASE = process.env.AI_GATEWAY_URL;
 const GATEWAY_KEY = process.env.AI_GATEWAY_API_KEY;
 const MODEL = process.env.NEXT_PUBLIC_LLM_MODEL ?? "google/gemini-3-flash";
 
+// JSON Schema estricto para la salida del tutor
+const lessonSchema = {
+  name: "subtopic_started_schema",
+  strict: true,
+  schema: {
+    type: "object",
+    additionalProperties: false,
+    properties: {
+      title: { 
+        type: "string",
+        minLength: 10,
+        maxLength: 150
+      },
+      content: { 
+        type: "string", 
+        minLength: 800, 
+        maxLength: 6000 
+      },
+      estimated_read_time_min: { 
+        type: "number",
+        minimum: 1,
+        maximum: 30
+      }
+    },
+    required: ["title", "content"]
+  }
+} as const;
+
 export async function POST(req: NextRequest) {
   try {
     if (!GATEWAY_BASE) {
@@ -60,11 +88,13 @@ export async function POST(req: NextRequest) {
       "- Cada bloque de código debe ser completo pero conciso (máximo 20-25 líneas)",
       "- Puedes referenciar conceptos de subtemas anteriores o del conocimiento previo del usuario",
       "- El contenido debe ser autónomo: alguien que lea solo esta lección debe entender el concepto",
-      "- Integra los objetivos de aprendizaje dentro del contenido narrativo, no como lista separada",
-      "- Devuelve SOLO el contenido markdown de la lección, sin JSON, sin estructura adicional"
+      "- Integra los objetivos de aprendizaje dentro del contenido narrativo, no como lista separada"
     ].join("\n");
 
-    // Mensaje de usuario con los datos del subtema
+    const railJson =
+      "Devuelve EXCLUSIVAMENTE JSON válido (sin texto adicional) que cumpla este esquema.";
+
+    // Mensaje de usuario con los datos del subtema (no repitas knowledge aquí)
     const userPayload = {
       subtopicTitle: subtopic.title,
       description: subtopic.description ?? ""
@@ -80,13 +110,15 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model: MODEL,
         stream: true,
+        response_format: { type: "json_schema", json_schema: lessonSchema },
         messages: [
           { role: "system", content: railContext },
           { role: "system", content: railRules },
+          { role: "system", content: railJson },
           {
             role: "user",
             content:
-              "Genera la clase del subtema en formato Markdown. Datos del subtema: " +
+              "Genera la clase del subtema como JSON según el esquema. Datos del subtema: " +
               JSON.stringify(userPayload)
           }
         ],
@@ -96,8 +128,16 @@ export async function POST(req: NextRequest) {
     });
 
     if (!res.ok) {
-      const text = await res.text().catch(() => "");
-      return Response.json({ error: "Vercel AI subtopicStarted streaming failed", detail: text }, { status: 502 });
+      const errorText = await res.text().catch(() => "No se pudo leer el error");
+      return Response.json(
+        { 
+          error: "Vercel AI subtopicStarted streaming failed", 
+          detail: errorText,
+          status: res.status,
+          statusText: res.statusText
+        }, 
+        { status: 502 }
+      );
     }
 
     if (!res.body) {
@@ -190,7 +230,7 @@ export async function POST(req: NextRequest) {
     });
   } catch (err: any) {
     return Response.json(
-      { error: "subtopicStarted streaming failed", detail: err?.message ?? String(err) },
+      { error: "subtopicStarted streaming failed:", detail: err?.message ?? String(err) },
       { status: 502 }
     );
   }
