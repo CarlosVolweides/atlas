@@ -21,7 +21,7 @@ export const ContextService = {
             .eq('Subtemas.orden', subtopicOrder)
             .eq('Subtemas.Modulos.orden', moduleOrder)
             .eq('Subtemas.Modulos.curso_id', courseId)
-            .single(); // un registro
+            .maybeSingle(); // retorna null si no hay resultados, sin error
 
         if (error) {
             console.error("Error obteniendo el contexto:", error);
