@@ -19,6 +19,7 @@ import { useSubtopicStarted } from '@/hooks/useSubtopic';
 import { toast } from "sonner";
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 import MarkdownSkeleton from '@/components/MarkdownSkeleton';
+import { ReturnButton } from '@/components/ui/ButtonsAnimated';
 
 type FlatSubtopic = {
   globalIndex: number
@@ -407,15 +408,18 @@ export default function LeccionViewer() {
 
         {/* Versión desktop */}
         <div className="hidden md:flex items-center justify-between">
-          <Button
-            variant="ghost"
+          <ReturnButton          
             onClick={handleVolver}
-            className="gap-2"
-            style={{ color: '#ffffff' }}
-          >
-            <ArrowLeft className="w-4 h-4" />
+            className="gap-2 mb-6"
+            width="w-32"
+            height="h-8"
+            fontSize="text-lg"
+            buttonColor="#00a2e207"
+            containerColor="bg-cyan-500"                      
+            textColor="#ffffffff" 
+            >
             Volver
-          </Button>
+          </ReturnButton>
 
           <div className="flex items-center gap-3">
             <div
