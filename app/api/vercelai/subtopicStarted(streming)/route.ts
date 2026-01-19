@@ -149,7 +149,9 @@ export async function POST(req: NextRequest) {
       async start(controller) {
         const reader = res.body!.getReader();
         const decoder = new TextDecoder();
+        const encoder = new TextEncoder();
         let buffer = "";
+        let fullJsonContent = ""; // Acumular todo el JSON completo
 
         try {
           while (true) {
@@ -171,6 +173,10 @@ export async function POST(req: NextRequest) {
                 const data = line.slice(6);
                 
                 if (data === "[DONE]") {
+                  // Al finalizar, enviar el JSON completo acumulado
+                  if (fullJsonContent.trim()) {
+                    controller.enqueue(encoder.encode(fullJsonContent));
+                  }
                   controller.close();
                   return;
                 }
@@ -180,8 +186,10 @@ export async function POST(req: NextRequest) {
                   const content = json.choices?.[0]?.delta?.content;
                   
                   if (content) {
-                    // Enviar el chunk de contenido como texto
-                    const encoder = new TextEncoder();
+                    // Acumular el contenido completo del JSON
+                    fullJsonContent += content;
+                    
+                    // Enviar el chunk de contenido en tiempo real para mostrar mientras se genera
                     controller.enqueue(encoder.encode(content));
                   }
                 } catch (e) {
@@ -200,7 +208,7 @@ export async function POST(req: NextRequest) {
                   const json = JSON.parse(data);
                   const content = json.choices?.[0]?.delta?.content;
                   if (content) {
-                    const encoder = new TextEncoder();
+                    fullJsonContent += content;
                     controller.enqueue(encoder.encode(content));
                   }
                 } catch (e) {
@@ -208,6 +216,11 @@ export async function POST(req: NextRequest) {
                 }
               }
             }
+          }
+
+          // Si aún hay contenido acumulado, enviarlo
+          if (fullJsonContent.trim()) {
+            controller.enqueue(encoder.encode(fullJsonContent));
           }
 
           controller.close();
