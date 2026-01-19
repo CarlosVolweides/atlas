@@ -313,7 +313,7 @@ export default function DetalleCursoPage() {
                         <div className="grid grid-cols-2 gap-3">
                           {/* Subtemas completados */}
                           <div 
-                            className="p-3 rounded-lg"
+                            className="p-3 rounded-lg hover:shadow-[0_0_10px_rgba(0,163,226,1)]"
                             style={{
                               background: 'rgba(0, 163, 226, 0.15)',
                               borderLeft: '3px solid #00A3E2'
@@ -332,7 +332,7 @@ export default function DetalleCursoPage() {
 
                           {/* Módulos completados */}
                           <div 
-                            className="p-3 rounded-lg"
+                            className="p-3 rounded-lg hover:shadow-[0_0_10px_rgba(0,163,226,1)]"
                             style={{
                               background: 'rgba(0, 163, 226, 0.15)',
                               borderLeft: '3px solid #00A3E2'
@@ -642,7 +642,7 @@ export default function DetalleCursoPage() {
                               return (
                                 <div
                                   key={subtopic.order}
-                                  className="flex items-center gap-3 p-2 rounded"
+                                  className="flex items-center gap-3 p-2 rounded hover:shadow-[0_0_5px_rgba(0,163,226,1)]"
                                   style={{
                                     background: 'rgba(255, 255, 255, 0.05)',
                                     borderLeft: `3px solid ${color}`
