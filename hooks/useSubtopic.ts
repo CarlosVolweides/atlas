@@ -85,6 +85,7 @@ const extractContentFromPartialJson = (jsonString: string): string | null => {
 };
 
 export const useSubtopicStreaming = () => {
+  const queryClient = useQueryClient();
   const [rawContent, setRawContent] = useState<string>(''); // Contenido completo del stream
   const [displayedContent, setDisplayedContent] = useState<string>(''); // Contenido mostrado (suavizado)
   const [isStreaming, setIsStreaming] = useState<boolean>(false); // Estado para controlar el streaming
@@ -304,6 +305,9 @@ export const useSubtopicStreaming = () => {
             }
           );
           console.log('Contenido del subtopic guardado exitosamente');
+          
+          // Invalidar la query de React Query para que se vuelva a obtener de la DB
+          queryClient.invalidateQueries(['subtopic-context', courseId, moduleOrder, subtopicOrder]);
         } catch (saveError) {
           console.error('Error al guardar el contenido del subtopic:', saveError);
           // No lanzar el error para no romper el flujo del streaming

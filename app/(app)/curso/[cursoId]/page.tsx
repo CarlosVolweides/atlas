@@ -8,7 +8,8 @@ import {
   AlertCircle,
   ClipboardList, ChevronRight,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  RefreshCw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -239,6 +240,35 @@ export default function LeccionViewer() {
     }
 
     // Usar streaming para generar contenido nuevo
+    setsubtopicIsLoading(true)
+    streamingHook.start({
+      knowledgeProfile: infoCurso.systemPrompt ?? "",
+      subtopic: {
+        title: subtopic.title,
+        description: ''
+      },
+      courseId: courseId,
+      moduleOrder: subtopic.moduleOrder,
+      subtopicOrder: subtopic.subtopicOrder
+    })
+  }
+
+  const handleRegenerarSubtema = () => {
+    if (subtemaActual === null || !flatSubtopics[subtemaActual]) return
+    if (!infoCurso?.systemPrompt) return
+
+    const subtopic = flatSubtopics[subtemaActual]
+
+    if (!subtopic) {
+      setsubtopicIsLoading(false)
+      return
+    }
+
+    // Limpiar contenido generado y resetear el stream
+    setGeneratedContent(null)
+    streamingHook.reset()
+
+    // Usar streaming para regenerar contenido (ignora el contenido existente en DB)
     setsubtopicIsLoading(true)
     streamingHook.start({
       knowledgeProfile: infoCurso.systemPrompt ?? "",
@@ -676,12 +706,33 @@ export default function LeccionViewer() {
                       <h2 className="text-xl md:text-2xl" style={{ color: '#ffffff' }}>
                         {flatSubtopics[subtemaActual]?.title || 'Subtema'}
                       </h2>
-                      {estadosSubtemas[subtemaActual] === 'aprobado' && (
-                        <div className="flex items-center gap-2 px-3 py-1 rounded-full self-start" style={{ background: 'rgba(0, 163, 226, 0.2)' }}>
-                          <CheckCircle2 className="w-4 h-4" style={{ color: '#00A3E2' }} />
-                          <span className="text-sm" style={{ color: '#00A3E2' }}>Completado</span>
-                        </div>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {estadosSubtemas[subtemaActual] === 'aprobado' || estadosSubtemas[subtemaActual] === 'completado' ? (
+                          <>
+                            <div className="flex items-center gap-2 px-3 py-1 rounded-full self-start" style={{ background: 'rgba(0, 163, 226, 0.2)' }}>
+                              <CheckCircle2 className="w-4 h-4" style={{ color: '#00A3E2' }} />
+                              <span className="text-sm" style={{ color: '#00A3E2' }}>Completado</span>
+                            </div>
+                            {!streamingHook.isLoading && !subtopicIsLoading && (
+                              <Button
+                                onClick={handleRegenerarSubtema}
+                                variant="outline"
+                                size="sm"
+                                className="flex items-center gap-2"
+                                style={{
+                                  background: 'rgba(255, 255, 255, 0.1)',
+                                  borderColor: '#00A3E2',
+                                  color: '#ffffff'
+                                }}
+                                title="Regenerar contenido de este subtema"
+                              >
+                                <RefreshCw className="w-4 h-4" />
+                                <span className="text-xs md:text-sm">Regenerar</span>
+                              </Button>
+                            )}
+                          </>
+                        ) : null}
+                      </div>
                     </div>
                     <div className="text-xs md:text-sm" style={{ color: '#cccccc' }}>
                       Subtema {subtemaActual + 1} de {totalSubtopics}
