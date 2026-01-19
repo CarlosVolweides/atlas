@@ -65,7 +65,7 @@ export function CursoCard({ nombre, porcentaje, tecnologias, dificultad, created
   
   return (
     <Card 
-      className="overflow-hidden transition-all hover:scale-105 cursor-pointer h-full flex flex-col"
+      className="overflow-hidden transition-all hover:scale-105 cursor-pointer h-full flex flex-col hover:shadow-[0_0_15px_rgba(0,163,226,1)]"
       style={{ 
         background: 'rgba(38, 36, 34, 0.6)', 
         backdropFilter: 'blur(10px)',

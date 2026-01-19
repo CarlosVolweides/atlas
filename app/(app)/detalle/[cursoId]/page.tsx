@@ -8,6 +8,7 @@ import { useCourseInfo, useTemary } from '@/hooks/useCourse';
 import { iconMapping } from '@/lib/utils/iconMapping';
 import { ModuleTemaryI, SubtopicTemaryI, EstadoSubtema } from '@/types/course';
 import { Header } from '@/components/Header';
+import ShineButton, { ReturnButton } from '@/components/ui/ButtonsAnimated';
 
 export default function DetalleCursoPage() {
   const router = useRouter();
@@ -206,15 +207,18 @@ export default function DetalleCursoPage() {
       <div className="flex-1 overflow-y-auto px-4 py-6">
         <div className="max-w-7xl mx-auto">
           {/* Botón de retroceso */}
-          <Button
-            variant="ghost"
+          <ReturnButton          
             onClick={handleVolver}
             className="gap-2 mb-6"
-            style={{ color: '#ffffff' }}
-          >
-            <ArrowLeft className="w-4 h-4" />
+            width="w-36"
+            height="h-8"
+            fontSize="text-lg"
+            buttonColor="#00a2e207"
+            containerColor="#ffffffff"
+            textColor="#ffffffff"
+            >
             Volver
-          </Button>
+          </ReturnButton>          
 
           {/* Grid de dos columnas */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -249,6 +253,17 @@ export default function DetalleCursoPage() {
                   {isLoading ? 'Obteniendo información del curso...' : 'Información detallada del curso'}
                 </p>
               </div>
+              {isLoading ? 'Cargando...' :
+                  (
+                  <ShineButton 
+                    onClick={handleEntrarCurso} 
+                    disabled={!courseId || isLoading}
+                  >
+                    Entrar al Curso
+                    <ArrowRight className="w-5 h-5 ml-2" />
+                  </ShineButton>
+                  )
+                }
             </div>
 
             {/* Contenido */}
@@ -297,7 +312,7 @@ export default function DetalleCursoPage() {
                         <div className="grid grid-cols-2 gap-3">
                           {/* Subtemas completados */}
                           <div 
-                            className="p-3 rounded-lg"
+                            className="p-3 rounded-lg hover:shadow-[0_0_10px_rgba(0,163,226,1)]"
                             style={{
                               background: 'rgba(0, 163, 226, 0.15)',
                               borderLeft: '3px solid #00A3E2'
@@ -316,7 +331,7 @@ export default function DetalleCursoPage() {
 
                           {/* Módulos completados */}
                           <div 
-                            className="p-3 rounded-lg"
+                            className="p-3 rounded-lg hover:shadow-[0_0_10px_rgba(0,163,226,1)]"
                             style={{
                               background: 'rgba(0, 163, 226, 0.15)',
                               borderLeft: '3px solid #00A3E2'
@@ -504,20 +519,7 @@ export default function DetalleCursoPage() {
             </div>
 
               {/* Footer con botón */}
-              <div className="pt-4 border-t" style={{ borderColor: 'rgba(0, 163, 226, 0.3)' }}>
-                <Button
-                  onClick={handleEntrarCurso}
-                  className="w-full"
-                  disabled={!courseId || isLoading}
-                  style={{ 
-                    background: '#00A3E2',
-                    color: '#ffffff'
-                  }}
-                >
-                  Entrar al Curso
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </div>
+              
             </div>
 
             {/* Columna derecha - Temario */}
@@ -639,7 +641,7 @@ export default function DetalleCursoPage() {
                               return (
                                 <div
                                   key={subtopic.order}
-                                  className="flex items-center gap-3 p-2 rounded"
+                                  className="flex items-center gap-3 p-2 rounded hover:shadow-[0_0_5px_rgba(0,163,226,1)]"
                                   style={{
                                     background: 'rgba(255, 255, 255, 0.05)',
                                     borderLeft: `3px solid ${color}`

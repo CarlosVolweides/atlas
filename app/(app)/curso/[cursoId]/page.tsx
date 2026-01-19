@@ -15,10 +15,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { ModuleTemaryI, EstadoSubtema, ordenSubtema } from '@/types/course';
 import { useTemary, useContextSubtopic, useUpdateSubtemaEstado, useCourseInfo } from '@/hooks/useCourse';
-import { useSubtopicStarted } from '@/hooks/useSubtopic';
+import { useSubtopicStarted, useSubtopicStreaming } from '@/hooks/useSubtopic';
 import { toast } from "sonner";
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 import MarkdownSkeleton from '@/components/MarkdownSkeleton';
+import { ReturnButton, SparkleButton } from '@/components/ui/ButtonsAnimated';
 
 type FlatSubtopic = {
   globalIndex: number
@@ -34,14 +35,14 @@ export default function LeccionViewer() {
   const courseId = parseInt(params?.cursoId as string || '0');
   const { data: temaryData } = useTemary(courseId, { enabled: courseId > 0 });
   const idCurso = parseInt(params?.cursoId as string);
-  const {data: infoCurso} = useCourseInfo(idCurso)
+  const { data: infoCurso } = useCourseInfo(idCurso)
 
   const flatSubtopics = useMemo<FlatSubtopic[]>(() => {
     if (!temaryData) return []
 
     let index = 0
 
-  return temaryData?.modules.flatMap((module : ModuleTemaryI) =>
+    return temaryData?.modules.flatMap((module: ModuleTemaryI) =>
       module.subtopics.map(sub => ({
         globalIndex: index++,
         moduleOrder: module.order,
@@ -81,7 +82,10 @@ export default function LeccionViewer() {
   //Estado para contenido generado temporalmente (no persistido en BD)
   const [generatedContent, setGeneratedContent] = useState<{ title: string; content: string; estimated_read_time_min?: number } | null>(null)
 
-  // Hook para generar contenido de subtema
+  // Hook para generar contenido de subtema (streaming)
+  const streamingHook = useSubtopicStreaming()
+  
+  // Hook para generar contenido de subtema (no-streaming, para contenido persistido)
   const { mutateAsync: generateSubtopic, isLoading: isGenerating } = useSubtopicStarted()
 
   const tieneContenido = useMemo(() => {
@@ -99,6 +103,29 @@ export default function LeccionViewer() {
     ordenActivo?.sub ?? null,
     tieneContenido // <--- Hara la consulta solo si no es 'vacio'
   )
+
+  // Helper function para validar que el contenido es markdown válido (no JSON crudo)
+  const isValidMarkdown = (content: string | null | undefined): boolean => {
+    if (!content || content.trim().length === 0) {
+      return false;
+    }
+    
+    // Verificar que no sea JSON crudo (empieza con { o [)
+    const trimmed = content.trim();
+    if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+      // Intentar parsear como JSON, si es válido entonces no es markdown
+      try {
+        JSON.parse(trimmed);
+        return false; // Es JSON válido, no markdown
+      } catch {
+        // No es JSON válido, podría ser markdown que empieza con {
+        return true;
+      }
+    }
+    
+    // Verificar que tenga contenido mínimo de markdown (al menos un carácter)
+    return trimmed.length > 0;
+  };
 
   // Función para obtener el estado actual de un subtema
   const obtenerEstadoSubtema = (index: number): EstadoSubtema => {
@@ -211,27 +238,18 @@ export default function LeccionViewer() {
       return
     }
 
-    generateSubtopic({
+    // Usar streaming para generar contenido nuevo
+    setsubtopicIsLoading(true)
+    streamingHook.start({
       knowledgeProfile: infoCurso.systemPrompt ?? "",
       subtopic: {
         title: subtopic.title,
         description: ''
       },
-      courseId: idCurso,
+      courseId: courseId,
       moduleOrder: subtopic.moduleOrder,
-      subtopicOrder: subtopic.subtopicOrder,
-      hasContent: hasContent
+      subtopicOrder: subtopic.subtopicOrder
     })
-      .then((response) => {
-        setGeneratedContent(response)
-        if (!hasContent) actualizarSubtema()
-      })
-      .catch((error) => {
-        console.error('Error al generar subtema:', error)
-      })
-      .finally(() => {
-        setsubtopicIsLoading(false)
-      })
   }
 
   const handleSiguiente = async () => {
@@ -317,7 +335,40 @@ export default function LeccionViewer() {
   useEffect(() => {
     // Limpiar contenido generado al cambiar de subtema
     setGeneratedContent(null)
+    // Limpiar el stream al cambiar de subtema
+    streamingHook.reset()
   }, [subtemaActual])
+
+  // useEffect para manejar cuando el streaming finaliza exitosamente
+  useEffect(() => {
+    if (streamingHook.isSuccess && streamingHook.data) {
+      const estadoActual = estadosSubtemas[subtemaActual]
+      const hasContent = estadoActual !== 'vacio'
+      
+      setGeneratedContent(streamingHook.data)
+      setsubtopicIsLoading(false)
+      
+      if (!hasContent) {
+        actualizarSubtema()
+      }
+    }
+  }, [streamingHook.isSuccess, streamingHook.data, subtemaActual, estadosSubtemas])
+
+  // useEffect para manejar errores del streaming
+  useEffect(() => {
+    if (streamingHook.error) {
+      setsubtopicIsLoading(false)
+      console.error('Error al generar subtema:', streamingHook.error)
+    }
+  }, [streamingHook.error])
+
+  // useEffect para limpiar el stream al desmontar el componente
+  useEffect(() => {
+    return () => {
+      // Cancelar el stream si el componente se desmonta
+      streamingHook.stop()
+    }
+  }, [])
 
 
   const porcentajeCompletado = Math.round(
@@ -407,15 +458,18 @@ export default function LeccionViewer() {
 
         {/* Versión desktop */}
         <div className="hidden md:flex items-center justify-between">
-          <Button
-            variant="ghost"
+          <ReturnButton
             onClick={handleVolver}
-            className="gap-2"
-            style={{ color: '#ffffff' }}
+            className="gap-2 mb-6"
+            width="w-32"
+            height="h-8"
+            fontSize="text-lg"
+            buttonColor="#00a2e207"
+            containerColor="#ffffffff"
+            textColor="#ffffffff"
           >
-            <ArrowLeft className="w-4 h-4" />
             Volver
-          </Button>
+          </ReturnButton>
 
           <div className="flex items-center gap-3">
             <div
@@ -477,9 +531,9 @@ export default function LeccionViewer() {
       </header>
 
       {/* Contenido principal */}
-      <div className="flex-1 overflow-hidden flex flex-col md:flex-row gap-4 md:gap-6 p-4 md:p-8">
+      <div className="flex-1 overflow-y-auto md:overflow-hidden flex flex-col md:flex-row gap-6 md:gap-6 p-4 md:p-8">
         {/* Lista de subtemas - Sidebar */}
-        <div className="w-full md:w-80 md:flex-shrink-0 flex flex-col min-h-0">
+        <div className="w-full md:w-80 md:flex-shrink-0 flex flex-col min-h-0 max-h-[170vh] md:max-h-full flex-shrink-0">
           <Card
             style={{
               background: 'rgba(38, 36, 34, 0.6)',
@@ -602,7 +656,7 @@ export default function LeccionViewer() {
         </div>
 
         {/* Contenido del subtema actual */}
-        <div className="flex-1 overflow-hidden flex flex-col min-h-0">
+        <div className="flex-1 overflow-hidden flex flex-col min-h-fit md:min-h-0">
           {modoPrueba ? (
             <div className="h-full">
             </div>
@@ -639,9 +693,26 @@ export default function LeccionViewer() {
                     style={{ color: '#ffffff', lineHeight: '1.8' }}
                   >
                     <div className="mb-3 md:mb-4 text-sm md:text-base">
-                      {isGenerating ? (
+                      {streamingHook.isLoading || subtopicIsLoading ? (
                         <div className="flex flex-col gap-4">
-                          <MarkdownSkeleton />
+                          {streamingHook.error ? (
+                            // Mostrar mensaje de error en lugar del JSON crudo
+                            <div className="flex flex-col items-center justify-center p-6 rounded-lg border" style={{ borderColor: 'rgba(239, 68, 68, 0.3)', background: 'rgba(239, 68, 68, 0.1)' }}>
+                              <AlertCircle className="w-8 h-8 mb-3" style={{ color: '#ef4444' }} />
+                              <p className="text-center font-medium mb-2" style={{ color: '#ffffff' }}>
+                                Error al generar la lección
+                              </p>
+                              <p className="text-center text-sm" style={{ color: '#cccccc' }}>
+                                {streamingHook.error.message || 'Ocurrió un error inesperado'}
+                              </p>
+                            </div>
+                          ) : streamingHook.content && isValidMarkdown(streamingHook.content) ? (
+                            // Mostrar contenido en tiempo real mientras se genera (solo si es markdown válido)
+                            <MarkdownRenderer content={streamingHook.content} />
+                          ) : (
+                            // Mostrar skeleton mientras carga o si el contenido no es válido aún
+                            <MarkdownSkeleton />
+                          )}
                         </div>
                       ) : generatedContent?.content ? (
                         <div className="flex flex-col gap-4">
@@ -659,21 +730,8 @@ export default function LeccionViewer() {
                     {/* Botón de generar subtema */}
                     {estadosSubtemas[subtemaActual] == 'vacio' && (
                       <div>
-                        <Button
-                          onClick={handleGenerarSubtema}
-                          variant="outline"
-                          className="w-full text-sm md:text-base"
-                          style={{
-                            background: 'rgba(255, 255, 255, 0.05)',
-                            borderColor: '#00A3E2',
-                            color: '#ffffff'
-                          }}
-                        >
-                          <ClipboardList className="w-4 h-4 mr-2" />
-                          Comenzar Lección
-                        </Button>
-
-                        {subtopicIsLoading && (
+                        
+                        {subtopicIsLoading ? (
                           <p
                             className="w-full text-sm md:text-base"
                             style={{
@@ -683,7 +741,17 @@ export default function LeccionViewer() {
                             Cargando Contenido...
                           </p>
 
-                        )}
+                        ) : !isGenerating &&
+                        <SparkleButton
+                          onClick={handleGenerarSubtema}
+                          disabled={subtopicIsLoading}
+                          className='mx-auto w-[350px] text-sm md:text-base h-12 rounded-xl bg-[#ffffff0d] border-1 border-solid border-[#00A3E2]'
+                          hoverFrom='#00A3E2'
+                          hoverTo='#0078e2ff'
+                          shadowColor='#00A3E2'
+                        >
+                          Comenzar Lección
+                        </SparkleButton>}
                       </div>
                     )}
 

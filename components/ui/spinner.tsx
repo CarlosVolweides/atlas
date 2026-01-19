@@ -1,4 +1,4 @@
-import { clsxMerge } from '../utils';
+import { clsxMerge } from '@/utils';
 import { cva } from 'class-variance-authority';
 import { type HTMLAttributes, type SVGProps } from 'react';
 

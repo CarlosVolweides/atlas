@@ -208,15 +208,13 @@ export function EditarCursoModal({
                               className={`
                                 w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center
                                 transition-all hover:scale-110
-                                ${isSelected ? 'ring-2 ring-offset-2' : ''}
+                                ${isSelected ? 'ring-2 ring-[#00A3E2] ring-offset-2 ring-offset-[#262422]' : ''}
                               `}
                               style={{
                                 background: isSelected 
                                   ? 'linear-gradient(135deg, #00A3E2 0%, #006b9a 100%)'
                                   : 'rgba(255, 255, 255, 0.1)',
-                                border: isSelected ? '2px solid #00A3E2' : '1px solid rgba(0, 163, 226, 0.3)',
-                                ringColor: '#00A3E2',
-                                ringOffsetColor: '#262422'
+                                border: isSelected ? '2px solid #00A3E2' : '1px solid rgba(0, 163, 226, 0.3)'
                               }}
                             >
                               {Icon && <Icon className="w-6 h-6 sm:w-7 sm:h-7 text-white" />}
@@ -234,7 +232,7 @@ export function EditarCursoModal({
                         }}
                         className={`
                           w-full flex items-center gap-3 p-3 rounded-lg transition-all
-                          ${selectedImage === null ? 'ring-2 ring-offset-2' : ''}
+                          ${selectedImage === null ? 'ring-2 ring-[#00A3E2] ring-offset-2 ring-offset-[#262422]' : ''}
                         `}
                         style={{
                           background: selectedImage === null
@@ -242,9 +240,7 @@ export function EditarCursoModal({
                             : 'rgba(255, 255, 255, 0.05)',
                           border: selectedImage === null 
                             ? '2px solid #00A3E2' 
-                            : '1px solid rgba(0, 163, 226, 0.3)',
-                          ringColor: '#00A3E2',
-                          ringOffsetColor: '#262422'
+                            : '1px solid rgba(0, 163, 226, 0.3)'
                         }}
                       >
                         <div 

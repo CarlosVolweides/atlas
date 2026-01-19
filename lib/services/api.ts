@@ -73,7 +73,7 @@ export const ApiServices = {
         },
     },
     subtopicStartedStreaming: {
-        async create(knowledgeProfile: string, subtopic: { title: string; description?: string; }) {
+        async create(knowledgeProfile: string, subtopic: { title: string; description?: string; }, courseId: number, moduleOrder: number, subtopicOrder: number) {
             const response = await fetch(`/api/${llmService}/subtopicStarted(streming)`, {
                 method: 'POST',
                 headers: {
@@ -88,6 +88,7 @@ export const ApiServices = {
             if (!response.body) {
                 throw new Error('No stream body received');
             }
+
             return response.body;
         }
     }
