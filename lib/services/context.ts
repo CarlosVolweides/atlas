@@ -51,20 +51,57 @@ export const ContextService = {
             throw new Error('No se encontró el subtema correspondiente para este curso y módulo.');
         }
 
-        // 2. Insertamos el nuevo contexto usando el ID encontrado
-        const { data, error: insertError } = await supabase
+        // 2. Verificar si ya existe un contexto para este subtema
+        // Usamos maybeSingle() que retorna null si no encuentra resultados (sin error)
+        const { data: existingContext } = await supabase
             .from('Contexto')
-            .insert([
-            {
-                subtema_id: subtopic.id, // Tu FK hacia subtemas
-                content: contentData.content
-            }
-            ])
-            .select()
-            .single();
+            .select('id')
+            .eq('subtema_id', subtopic.id)
+            .maybeSingle();
 
-        if (insertError) throw insertError;
-        return data;
+        // Si existingContext tiene datos, significa que existe y debemos actualizar
+        // Si es null, no existe y debemos insertar
+        if (existingContext && existingContext.id) {
+            // 3a. Si existe, actualizar el contexto existente usando su ID
+            console.log('Actualizando contexto existente con id:', existingContext.id, 'para subtema_id:', subtopic.id);
+            const { data: updateData, error: updateError } = await supabase
+                .from('Contexto')
+                .update({
+                    content: contentData.content
+                })
+                .eq('id', existingContext.id) // Usar el ID del contexto existente
+                .select()
+                .single();
+            
+            if (updateError) {
+                console.error('Error al actualizar contexto:', updateError);
+                throw updateError;
+            }
+            
+            console.log('Contexto actualizado exitosamente');
+            return updateData;
+        } else {
+            // 3b. Si no existe, insertar un nuevo contexto
+            console.log('Insertando nuevo contexto para subtema_id:', subtopic.id);
+            const { data: insertData, error: insertError } = await supabase
+                .from('Contexto')
+                .insert([
+                {
+                    subtema_id: subtopic.id,
+                    content: contentData.content
+                }
+                ])
+                .select()
+                .single();
+            
+            if (insertError) {
+                console.error('Error al insertar contexto:', insertError);
+                throw insertError;
+            }
+            
+            console.log('Contexto insertado exitosamente');
+            return insertData;
+        }
     }
 
     

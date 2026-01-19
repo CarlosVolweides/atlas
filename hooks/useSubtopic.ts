@@ -1,5 +1,5 @@
 // hooks/useSubtopic.ts
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useMutation, useQueryClient } from 'react-query';
 import { ApiServices } from '@/lib/services/api';
 import { ContextService } from '@/lib/services/context';
@@ -35,13 +35,30 @@ export const useSubtopicStarted = () => {
   });
 };
 
+// Helper function para normalizar saltos de línea y otros escapes en el contenido
+const normalizeContentEscapes = (content: string): string => {
+  if (!content || typeof content !== 'string') {
+    return content;
+  }
+  
+  // Reemplazar escapes JSON comunes por sus caracteres reales
+  return content
+    .replace(/\\n/g, '\n')           // \n -> salto de línea real
+    .replace(/\\r/g, '\r')           // \r -> retorno de carro
+    .replace(/\\t/g, '\t')           // \t -> tabulación
+    .replace(/\\"/g, '"')            // \" -> comilla doble
+    .replace(/\\'/g, "'")            // \' -> comilla simple
+    .replace(/\\\\/g, '\\');         // \\ -> backslash
+};
+
 // Helper function para extraer content de JSON parcial usando regex
 const extractContentFromPartialJson = (jsonString: string): string | null => {
   try {
     // Intentar parsear el JSON completo primero
     const parsed = JSON.parse(jsonString);
     if (parsed && typeof parsed === 'object' && typeof parsed.content === 'string') {
-      return parsed.content;
+      // Normalizar escapes en el contenido parseado
+      return normalizeContentEscapes(parsed.content);
     }
   } catch {
     // Si falla, intentar extraer el campo content usando regex
@@ -50,36 +67,120 @@ const extractContentFromPartialJson = (jsonString: string): string | null => {
     if (contentMatch && contentMatch[1]) {
       // Decodificar escapes JSON
       try {
-        return JSON.parse(`"${contentMatch[1]}"`);
+        const decoded = JSON.parse(`"${contentMatch[1]}"`);
+        return normalizeContentEscapes(decoded);
       } catch {
-        return contentMatch[1];
+        return normalizeContentEscapes(contentMatch[1]);
       }
     }
     
     // Alternativa: buscar content con regex más flexible para JSON incompleto
     const flexibleMatch = jsonString.match(/"content"\s*:\s*"((?:[^"\\]|\\.|")*)/);
     if (flexibleMatch && flexibleMatch[1]) {
-      // Intentar decodificar, removiendo escapes
-      return flexibleMatch[1]
-        .replace(/\\n/g, '\n')
-        .replace(/\\t/g, '\t')
-        .replace(/\\"/g, '"')
-        .replace(/\\\\/g, '\\');
+      // Normalizar escapes usando la función helper
+      return normalizeContentEscapes(flexibleMatch[1]);
     }
   }
   return null;
 };
 
 export const useSubtopicStreaming = () => {
-  const [content, setContent] = useState<string>('');
+  const queryClient = useQueryClient();
+  const [rawContent, setRawContent] = useState<string>(''); // Contenido completo del stream
+  const [displayedContent, setDisplayedContent] = useState<string>(''); // Contenido mostrado (suavizado)
+  const [isStreaming, setIsStreaming] = useState<boolean>(false); // Estado para controlar el streaming
   const [data, setData] = useState<SubtopicStartedResponse | null>(null);
   const readerRef = useRef<ReadableStreamDefaultReader<Uint8Array> | null>(null);
+  const typewriterIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const displayedIndexRef = useRef<number>(0);
+  const rawContentRef = useRef<string>(''); // Ref para acceder al contenido más reciente en el intervalo
+
+  // Actualizar la ref cuando cambia rawContent
+  useEffect(() => {
+    rawContentRef.current = rawContent;
+  }, [rawContent]);
+
+  // Efecto para suavizar la aparición del texto (typewriter effect)
+  useEffect(() => {
+    // Si no hay contenido, limpiar y salir
+    if (!rawContent) {
+      setDisplayedContent('');
+      displayedIndexRef.current = 0;
+      rawContentRef.current = '';
+      if (typewriterIntervalRef.current) {
+        clearInterval(typewriterIntervalRef.current);
+        typewriterIntervalRef.current = null;
+      }
+      return;
+    }
+
+    // Si no está streaming, mostrar todo el contenido de inmediato
+    if (!isStreaming) {
+      setDisplayedContent(rawContent);
+      displayedIndexRef.current = rawContent.length;
+      if (typewriterIntervalRef.current) {
+        clearInterval(typewriterIntervalRef.current);
+        typewriterIntervalRef.current = null;
+      }
+      return;
+    }
+
+    // Si ya hay un intervalo corriendo, solo actualizar el contenido disponible
+    // El intervalo continuará mostrando progresivamente
+    if (typewriterIntervalRef.current) {
+      return;
+    }
+
+    // Calcular cuántos caracteres mostrar por frame
+    // Velocidad ajustable: más caracteres = más rápido, menos = más suave
+    const charsPerFrame = 8; // Mostrar 3 caracteres a la vez para suavidad
+    const frameDelay = 10; // ~60fps (16ms por frame)
+
+    typewriterIntervalRef.current = setInterval(() => {
+      const currentIndex = displayedIndexRef.current;
+      const currentRawContent = rawContentRef.current; // Usar ref para obtener el valor más reciente
+      
+      // Si ya mostramos todo el contenido disponible, esperar más contenido
+      if (currentIndex >= currentRawContent.length) {
+        // Si el streaming terminó, mostrar todo de inmediato y limpiar
+        if (!isStreaming) {
+          setDisplayedContent(currentRawContent);
+          displayedIndexRef.current = currentRawContent.length;
+          if (typewriterIntervalRef.current) {
+            clearInterval(typewriterIntervalRef.current);
+            typewriterIntervalRef.current = null;
+          }
+        }
+        return;
+      }
+
+      // Calcular nuevo índice (mostrar más caracteres)
+      const newIndex = Math.min(
+        currentIndex + charsPerFrame,
+        currentRawContent.length
+      );
+      
+      displayedIndexRef.current = newIndex;
+      setDisplayedContent(currentRawContent.substring(0, newIndex));
+    }, frameDelay);
+
+    // Cleanup
+    return () => {
+      if (typewriterIntervalRef.current) {
+        clearInterval(typewriterIntervalRef.current);
+        typewriterIntervalRef.current = null;
+      }
+    };
+  }, [rawContent, isStreaming]);
 
   const mutation = useMutation<SubtopicStartedResponse, Error, Omit<SubtopicParams, 'hasContent'>>({
     mutationFn: async ({ knowledgeProfile, subtopic, courseId, moduleOrder, subtopicOrder }) => {
       // Resetear contenido y datos
-      setContent('');
+      setRawContent('');
+      setDisplayedContent('');
+      displayedIndexRef.current = 0;
       setData(null);
+      setIsStreaming(true);
 
       // Obtener el stream
       const stream = await ApiServices.subtopicStartedStreaming.create(
@@ -113,9 +214,10 @@ export const useSubtopicStreaming = () => {
         // Intentar extraer solo el campo content del JSON parcial
         const extractedContent = extractContentFromPartialJson(accumulatedJson);
         if (extractedContent !== null && extractedContent.trim().length > 0) {
-          // Actualizar content con solo el markdown extraído
-          lastValidContent = extractedContent;
-          setContent(extractedContent);
+          // Normalizar escapes y actualizar rawContent (el efecto typewriter se encargará de mostrarlo)
+          const normalizedContent = normalizeContentEscapes(extractedContent);
+          lastValidContent = normalizedContent;
+          setRawContent(normalizedContent);
         }
         // Si no se puede extraer, no actualizar content (mantener el último contenido válido)
         // Esto evita mostrar JSON crudo durante el streaming
@@ -143,29 +245,38 @@ export const useSubtopicStreaming = () => {
           parsedData.title = subtopic.title;
         }
         
-        // Actualizar content con el contenido final parseado
-        setContent(parsedData.content);
+        // Normalizar escapes en el contenido (convertir \n a saltos de línea reales)
+        parsedData.content = normalizeContentEscapes(parsedData.content);
+        
+        // Actualizar rawContent con el contenido final parseado y normalizado
+        // El efecto typewriter mostrará el resto del contenido suavemente
+        setRawContent(parsedData.content);
+        setIsStreaming(false); // Marcar que el streaming terminó
         
       } catch (parseError) {
         // Si falla el parsing, intentar extraer content con el helper
         const extractedContent = extractContentFromPartialJson(accumulatedJson);
         if (extractedContent && extractedContent.trim().length > 0) {
-          // Si se puede extraer contenido válido, usarlo
+          // Normalizar escapes y usar el contenido extraído
+          const normalizedContent = normalizeContentEscapes(extractedContent);
           parsedData = {
             title: subtopic.title,
-            content: extractedContent,
+            content: normalizedContent,
             estimated_read_time_min: undefined
           };
-          setContent(extractedContent);
+          setRawContent(normalizedContent);
+          setIsStreaming(false);
         } else if (lastValidContent.trim().length > 0) {
           // Si no se puede extraer pero tenemos contenido válido previo, usarlo
+          // (ya está normalizado porque se normalizó cuando se estableció)
           console.warn('Error al parsear JSON del stream, usando último contenido válido extraído:', parseError);
           parsedData = {
             title: subtopic.title,
             content: lastValidContent,
             estimated_read_time_min: undefined
           };
-          // No actualizar content aquí, ya está establecido con el último válido
+          setRawContent(lastValidContent);
+          setIsStreaming(false);
         } else {
           // Si no hay contenido válido, no establecer JSON crudo
           console.warn('Error al parsear JSON del stream, no se pudo extraer contenido válido:', parseError);
@@ -175,7 +286,8 @@ export const useSubtopicStreaming = () => {
             content: '',
             estimated_read_time_min: undefined
           };
-          setContent('');
+          setRawContent('');
+          setIsStreaming(false);
         }
       }
 
@@ -193,6 +305,9 @@ export const useSubtopicStreaming = () => {
             }
           );
           console.log('Contenido del subtopic guardado exitosamente');
+          
+          // Invalidar la query de React Query para que se vuelva a obtener de la DB
+          queryClient.invalidateQueries(['subtopic-context', courseId, moduleOrder, subtopicOrder]);
         } catch (saveError) {
           console.error('Error al guardar el contenido del subtopic:', saveError);
           // No lanzar el error para no romper el flujo del streaming
@@ -205,8 +320,11 @@ export const useSubtopicStreaming = () => {
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Error al generar la lección');
-      setContent('');
+      setRawContent('');
+      setDisplayedContent('');
+      displayedIndexRef.current = 0;
       setData(null);
+      setIsStreaming(false);
     },
   });
 
@@ -216,18 +334,27 @@ export const useSubtopicStreaming = () => {
       readerRef.current.releaseLock();
       readerRef.current = null;
     }
+    setIsStreaming(false);
+    // Limpiar el intervalo del typewriter
+    if (typewriterIntervalRef.current) {
+      clearInterval(typewriterIntervalRef.current);
+      typewriterIntervalRef.current = null;
+    }
   }, []);
 
   const reset = useCallback(() => {
     stop();
-    setContent('');
+    setRawContent('');
+    setDisplayedContent('');
+    displayedIndexRef.current = 0;
     setData(null);
+    setIsStreaming(false);
     mutation.reset();
   }, [stop, mutation]);
 
   return {
-    content,           // Contenido en tiempo real mientras se genera
-    data,              // Objeto completo parseado al finalizar
+    content: displayedContent,  // Contenido suavizado que se muestra progresivamente
+    data,                       // Objeto completo parseado al finalizar
     isLoading: mutation.isLoading,
     error: mutation.error,
     start: mutation.mutate,

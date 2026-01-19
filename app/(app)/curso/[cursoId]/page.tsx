@@ -8,7 +8,13 @@ import {
   AlertCircle,
   ClipboardList, ChevronRight,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  RefreshCw,
+  RotateCcw,
+  Menu,
+  X,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -17,6 +23,7 @@ import { ModuleTemaryI, EstadoSubtema, ordenSubtema } from '@/types/course';
 import { useTemary, useContextSubtopic, useUpdateSubtemaEstado, useCourseInfo } from '@/hooks/useCourse';
 import { useSubtopicStarted, useSubtopicStreaming } from '@/hooks/useSubtopic';
 import { toast } from "sonner";
+import { useQueryClient } from 'react-query';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 import MarkdownSkeleton from '@/components/MarkdownSkeleton';
 import { ReturnButton, SparkleButton } from '@/components/ui/ButtonsAnimated';
@@ -32,6 +39,7 @@ type FlatSubtopic = {
 export default function LeccionViewer() {
   const router = useRouter();
   const params = useParams();
+  const queryClient = useQueryClient();
   const courseId = parseInt(params?.cursoId as string || '0');
   const { data: temaryData } = useTemary(courseId, { enabled: courseId > 0 });
   const idCurso = parseInt(params?.cursoId as string);
@@ -74,6 +82,7 @@ export default function LeccionViewer() {
   const [modoTutoria, setModoTutoria] = useState(false);
   const [subtemaAprobado, setSubtemaAprobado] = useState(false);
   const [modoPrueba, setModoPrueba] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false); // Estado para controlar el sidebar en móvil
 
   //Estado de generacion de subtemas
   const [subtopicIsLoading, setsubtopicIsLoading] = useState(false)
@@ -81,6 +90,10 @@ export default function LeccionViewer() {
   const [isAdvancing, setIsAdvancing] = useState(false)
   //Estado para contenido generado temporalmente (no persistido en BD)
   const [generatedContent, setGeneratedContent] = useState<{ title: string; content: string; estimated_read_time_min?: number } | null>(null)
+
+  // Refs para los contenedores scrollables
+  const contentScrollRef = useRef<HTMLDivElement>(null) // Contenedor del contenido del subtema
+  const mainContainerRef = useRef<HTMLDivElement>(null) // Contenedor principal (móvil)
 
   // Hook para generar contenido de subtema (streaming)
   const streamingHook = useSubtopicStreaming()
@@ -252,6 +265,52 @@ export default function LeccionViewer() {
     })
   }
 
+  const handleRegenerarSubtema = () => {
+    if (subtemaActual === null || !flatSubtopics[subtemaActual]) return
+    if (!infoCurso?.systemPrompt) return
+
+    const subtopic = flatSubtopics[subtemaActual]
+
+    if (!subtopic) {
+      setsubtopicIsLoading(false)
+      return
+    }
+
+    // Limpiar contenido generado y resetear el stream
+    setGeneratedContent(null)
+    streamingHook.reset()
+
+    // Usar streaming para regenerar contenido (ignora el contenido existente en DB)
+    setsubtopicIsLoading(true)
+    streamingHook.start({
+      knowledgeProfile: infoCurso.systemPrompt ?? "",
+      subtopic: {
+        title: subtopic.title,
+        description: ''
+      },
+      courseId: courseId,
+      moduleOrder: subtopic.moduleOrder,
+      subtopicOrder: subtopic.subtopicOrder
+    })
+  }
+
+  const handleRecargarSubtema = () => {
+    if (subtemaActual === null || !flatSubtopics[subtemaActual]) return
+
+    const subtopic = flatSubtopics[subtemaActual]
+
+    if (!subtopic) return
+
+    // Limpiar contenido generado temporalmente
+    setGeneratedContent(null)
+
+    // Invalidar la query de React Query para forzar la recarga desde la DB
+    const currentOrden = ordenActivo;
+    if (currentOrden && currentOrden.mod !== null && currentOrden.sub !== null) {
+      queryClient.invalidateQueries(['subtopic-context', courseId, currentOrden.mod, currentOrden.sub]);
+    }
+  }
+
   const handleSiguiente = async () => {
     if (isAdvancing) return
     if (subtemaActual < totalSubtopics - 1) {
@@ -264,12 +323,66 @@ export default function LeccionViewer() {
         setSubtemaAprobado(false);
         setModoPrueba(false);
         setsubtopicIsLoading(false);
+        
+        // Scroll suave hacia arriba después de un pequeño delay para asegurar que el contenido se haya actualizado
+        setTimeout(() => {
+          scrollToTop();
+        }, 150);
       } catch {
         toast.error('No se pudo guardar el progreso')
       } finally {
         setIsAdvancing(false)
       }
 
+    }
+  };
+
+  // Funciones para scroll suave
+  const scrollToTop = () => {
+    // Intentar con el contenedor del contenido primero (más específico)
+    if (contentScrollRef.current) {
+      contentScrollRef.current.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }
+    
+    // También intentar con el contenedor principal (móvil tiene overflow-y-auto)
+    if (mainContainerRef.current) {
+      mainContainerRef.current.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }
+    
+    // Fallback: usar scrollIntoView en el elemento con id (funciona mejor en algunos casos)
+    setTimeout(() => {
+      const contentStart = document.getElementById('content-start');
+      if (contentStart) {
+        contentStart.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
+  };
+
+  const scrollToBottom = () => {
+    // Intentar con el contenedor del contenido primero
+    if (contentScrollRef.current) {
+      const scrollHeight = contentScrollRef.current.scrollHeight;
+      const clientHeight = contentScrollRef.current.clientHeight;
+      contentScrollRef.current.scrollTo({
+        top: scrollHeight - clientHeight,
+        behavior: 'smooth'
+      });
+    }
+    
+    // También intentar con el contenedor principal (móvil tiene overflow-y-auto)
+    if (mainContainerRef.current) {
+      const scrollHeight = mainContainerRef.current.scrollHeight;
+      const clientHeight = mainContainerRef.current.clientHeight;
+      mainContainerRef.current.scrollTo({
+        top: scrollHeight - clientHeight,
+        behavior: 'smooth'
+      });
     }
   };
 
@@ -292,7 +405,8 @@ export default function LeccionViewer() {
   const handleCambiarSubtema = (index: number) => {
     setSubtemaActual(index);
     setsubtopicIsLoading(false);
-
+    // Cerrar el sidebar en móvil al cambiar de subtema
+    setSidebarOpen(false);
   }
 
   // Para iniciar estados provenientes del flatSubtopics (temaryData)
@@ -382,7 +496,7 @@ export default function LeccionViewer() {
     >
       {/* Header */}
       <header
-        className="w-full px-4 md:px-8 py-3 md:py-4"
+        className="w-full px-4 md:px-8 py-3 md:py-4 relative z-10"
         style={{
           background: 'rgba(0, 0, 0, 0.3)',
           backdropFilter: 'blur(10px)',
@@ -392,67 +506,65 @@ export default function LeccionViewer() {
         {/* Versión móvil */}
         <div className="flex md:hidden flex-col gap-3">
           <div className="flex items-center justify-between">
-            <Button
-              variant="ghost"
-              onClick={handleVolver}
-              className="gap-2"
-              style={{ color: '#ffffff' }}
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Volver
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="gap-2"
+                style={{ color: '#ffffff' }}
+                title="Abrir/cerrar menú"
+              >
+                {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={handleVolver}
+                className="gap-2"
+                style={{ color: '#ffffff' }}
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Volver
+              </Button>
+            </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-              style={{ background: 'linear-gradient(135deg, #00A3E2 0%, #006b9a 100%)' }}
-            >
-              <BookOpen className="w-4 h-4 text-white" />
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <div
+                className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{ background: 'linear-gradient(135deg, #00A3E2 0%, #006b9a 100%)' }}
+              >
+                <BookOpen className="w-3 h-3 text-white" />
+              </div>
+              <h1 className="text-sm truncate" style={{ color: '#ffffff' }}>{infoCurso?.tecnologia}</h1>
             </div>
-            <div className="min-w-0 flex-1">
-              <h1 className="text-lg truncate" style={{ color: '#ffffff' }}>{infoCurso?.tecnologia}</h1>
-              <div className="flex gap-2 mt-1 flex-wrap">
-                {infoCurso?.herramientasRequeridas &&
-                  infoCurso?.conocimientosPrevios?.map((tech: string[], i: number) => (
-                    <span key={i} className="text-xs px-2 py-0.5 rounded" style={{
-                      background: 'rgba(0, 163, 226, 0.3)',
-                      color: '#ffffff'
-                    }}>
-                      {tech}
-                    </span>
-                  ))}
+            
+            {/* Estadísticas compactas en la parte superior derecha */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <div className="px-2 py-1 rounded" style={{
+                background: 'rgba(0, 163, 226, 0.2)',
+                backdropFilter: 'blur(10px)',
+                borderColor: '#00A3E2',
+                borderWidth: '1px'
+              }}>
+                <div className="flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3" style={{ color: '#00A3E2' }} />
+                  <span className="text-xs font-semibold" style={{ color: '#ffffff' }}>
+                    {estadosSubtemas.filter(e => e === 'completado').length}/{totalSubtopics}
+                  </span>
+                </div>
+              </div>
+              <div className="px-2 py-1 rounded" style={{
+                background: 'rgba(0, 163, 226, 0.2)',
+                backdropFilter: 'blur(10px)',
+                borderColor: '#00A3E2',
+                borderWidth: '1px'
+              }}>
+                <span className="text-xs font-semibold" style={{ color: '#ffffff' }}>
+                  {porcentajeCompletado}%
+                </span>
               </div>
             </div>
-          </div>
-
-          <div className="flex gap-2">
-            <div className="flex-1 px-3 py-2 rounded-lg" style={{
-              background: 'rgba(0, 163, 226, 0.2)',
-              backdropFilter: 'blur(10px)',
-              borderColor: '#00A3E2',
-              borderWidth: '1px'
-            }}>
-              <div className="flex items-center gap-2 mb-1">
-                <CheckCircle2 className="w-3 h-3" style={{ color: '#00A3E2' }} />
-                <span className="text-xs" style={{ color: '#cccccc' }}>Subtemas</span>
-              </div>
-              <p className="text-lg" style={{ color: '#ffffff' }}>
-                {estadosSubtemas.filter(e => e === 'completado').length}/{totalSubtopics}
-              </p>
-            </div>
-          </div>
-
-          <div className="w-full">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs" style={{ color: '#ffffff' }}>Progreso</span>
-              <span className="text-xs" style={{ color: '#ffffff' }}>{porcentajeCompletado}%</span>
-            </div>
-            <Progress
-              value={porcentajeCompletado}
-              className="h-2"
-              style={{ background: 'rgba(255, 255, 255, 0.3)' }}
-            />
           </div>
         </div>
 
@@ -531,25 +643,64 @@ export default function LeccionViewer() {
       </header>
 
       {/* Contenido principal */}
-      <div className="flex-1 overflow-y-auto md:overflow-hidden flex flex-col md:flex-row gap-6 md:gap-6 p-4 md:p-8">
+      <div 
+        ref={mainContainerRef}
+        className="flex-1 overflow-y-auto md:overflow-hidden flex flex-col md:flex-row md:items-start gap-3 md:gap-6 p-2 md:p-8 md:pl-0 relative"
+      >
+        {/* Backdrop para móvil cuando el sidebar está abierto */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 z-40 md:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
         {/* Lista de subtemas - Sidebar */}
-        <div className="w-full md:w-80 md:flex-shrink-0 flex flex-col min-h-0 max-h-[170vh] md:max-h-full flex-shrink-0">
+        <aside
+          className={`
+            fixed md:relative
+            top-0 md:top-auto
+            left-0 md:left-auto
+            bottom-0 md:bottom-auto
+            w-80 max-w-[85vw]
+            md:w-80 md:flex-shrink-0
+            h-screen md:h-auto md:max-h-full
+            flex flex-col
+            z-50 md:z-0
+            transform transition-transform duration-300 ease-in-out
+            ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+            shadow-2xl md:shadow-none
+          `}
+        >
           <Card
             style={{
               background: 'rgba(38, 36, 34, 0.6)',
               backdropFilter: 'blur(10px)',
               borderColor: '#00A3E2',
               borderWidth: '1px',
-              height: '100%',
               display: 'flex',
               flexDirection: 'column'
             }}
+            className="rounded-lg h-full md:h-auto md:max-h-full"
           >
-            <CardContent className="p-3 md:p-4 flex flex-col flex-1 min-h-0 overflow-hidden">
-              <h3 className="mb-3 md:mb-4 text-base md:text-lg flex-shrink-0" style={{ color: '#ffffff' }}>
-                Contenido del curso
-              </h3>
-              <div className="space-y-1 flex-1 overflow-y-auto pr-1" style={{
+            <CardContent className="p-3 md:p-4 md:pb-6 flex flex-col h-full md:h-auto md:max-h-full overflow-hidden">
+              <div className="flex items-center justify-between mb-3 md:mb-4 flex-shrink-0">
+                <h3 className="text-base md:text-lg" style={{ color: '#ffffff' }}>
+                  Contenido del curso
+                </h3>
+                {/* Botón de cerrar solo en móvil */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSidebarOpen(false)}
+                  className="md:hidden"
+                  style={{ color: '#ffffff' }}
+                  title="Cerrar menú"
+                >
+                  <X className="w-5 h-5" />
+                </Button>
+              </div>
+              <div className="space-y-1 flex-1 min-h-0 overflow-y-auto md:max-h-[70vh] pr-1" style={{
                 scrollbarWidth: 'thin',
                 scrollbarColor: '#00A3E2 rgba(255, 255, 255, 0.1)'
               }}>
@@ -653,15 +804,15 @@ export default function LeccionViewer() {
               )}
             </CardContent>
           </Card>
-        </div>
+        </aside>
 
         {/* Contenido del subtema actual */}
-        <div className="flex-1 overflow-hidden flex flex-col min-h-fit md:min-h-0">
+        <main className="flex-1 flex flex-col min-h-0 overflow-hidden md:pl-82">
           {modoPrueba ? (
             <div className="h-full">
             </div>
           ) : !modoTutoria ? (
-            <div className="h-full overflow-y-auto">
+            <div className="h-full overflow-y-auto" ref={contentScrollRef}>
               <Card
                 style={{
                   background: 'rgba(38, 36, 34, 0.6)',
@@ -669,19 +820,56 @@ export default function LeccionViewer() {
                   borderColor: '#00A3E2',
                   borderWidth: '1px'
                 }}
+                className="md:ml-0"
               >
-                <CardContent className="p-4 md:p-8">
-                  <div className="mb-4 md:mb-6">
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-0 mb-3 md:mb-4">
-                      <h2 className="text-xl md:text-2xl" style={{ color: '#ffffff' }}>
+                <CardContent className="p-3 md:p-8 md:pl-82">
+                  <div className="mb-3 md:mb-6" id="content-start">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-0 mb-2 md:mb-4">
+                      <h2 className="text-lg md:text-2xl" style={{ color: '#ffffff' }}>
                         {flatSubtopics[subtemaActual]?.title || 'Subtema'}
                       </h2>
-                      {estadosSubtemas[subtemaActual] === 'aprobado' && (
-                        <div className="flex items-center gap-2 px-3 py-1 rounded-full self-start" style={{ background: 'rgba(0, 163, 226, 0.2)' }}>
-                          <CheckCircle2 className="w-4 h-4" style={{ color: '#00A3E2' }} />
-                          <span className="text-sm" style={{ color: '#00A3E2' }}>Completado</span>
-                        </div>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {estadosSubtemas[subtemaActual] === 'aprobado' || estadosSubtemas[subtemaActual] === 'completado' ? (
+                          <div className="flex items-center gap-2 px-3 py-1 rounded-full self-start" style={{ background: 'rgba(0, 163, 226, 0.2)' }}>
+                            <CheckCircle2 className="w-4 h-4" style={{ color: '#00A3E2' }} />
+                            <span className="text-sm" style={{ color: '#00A3E2' }}>Completado</span>
+                          </div>
+                        ) : null}
+                        {!streamingHook.isLoading && !subtopicIsLoading && (estadosSubtemas[subtemaActual] === 'aprobado' || estadosSubtemas[subtemaActual] === 'completado' || estadosSubtemas[subtemaActual] === 'pendiente') && (
+                          <div className="flex items-center gap-2">
+                            <Button
+                              onClick={handleRecargarSubtema}
+                              variant="outline"
+                              size="sm"
+                              className="flex items-center gap-2"
+                              style={{
+                                background: 'rgba(255, 255, 255, 0.1)',
+                                borderColor: '#00A3E2',
+                                color: '#ffffff'
+                              }}
+                              title="Recargar contenido desde la base de datos"
+                            >
+                              <RotateCcw className="w-4 h-4" />
+                              <span className="text-xs md:text-sm">Recargar</span>
+                            </Button>
+                            <Button
+                              onClick={handleRegenerarSubtema}
+                              variant="outline"
+                              size="sm"
+                              className="flex items-center gap-2"
+                              style={{
+                                background: 'rgba(255, 255, 255, 0.1)',
+                                borderColor: '#00A3E2',
+                                color: '#ffffff'
+                              }}
+                              title="Regenerar contenido de este subtema (llama a la API)"
+                            >
+                              <RefreshCw className="w-4 h-4" />
+                              <span className="text-xs md:text-sm">Regenerar</span>
+                            </Button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <div className="text-xs md:text-sm" style={{ color: '#cccccc' }}>
                       Subtema {subtemaActual + 1} de {totalSubtopics}
@@ -742,16 +930,18 @@ export default function LeccionViewer() {
                           </p>
 
                         ) : !isGenerating &&
-                        <SparkleButton
-                          onClick={handleGenerarSubtema}
-                          disabled={subtopicIsLoading}
-                          className='mx-auto w-[350px] text-sm md:text-base h-12 rounded-xl bg-[#ffffff0d] border-1 border-solid border-[#00A3E2]'
-                          hoverFrom='#00A3E2'
-                          hoverTo='#0078e2ff'
-                          shadowColor='#00A3E2'
-                        >
-                          Comenzar Lección
-                        </SparkleButton>}
+                        <div className="flex justify-center w-full">
+                          <SparkleButton
+                            onClick={handleGenerarSubtema}
+                            disabled={subtopicIsLoading}
+                            className='w-full max-w-[280px] md:w-[350px] text-xs md:text-base h-10 md:h-12 rounded-xl bg-[#ffffff0d] border-1 border-solid border-[#00A3E2]'
+                            hoverFrom='#00A3E2'
+                            hoverTo='#0078e2ff'
+                            shadowColor='#00A3E2'
+                          >
+                            Comenzar Lección
+                          </SparkleButton>
+                        </div>}
                       </div>
                     )}
 
@@ -782,6 +972,40 @@ export default function LeccionViewer() {
                   </div>
                 </CardContent>
               </Card>
+              
+              {/* Botones flotantes de scroll solo en móvil */}
+              <div className="fixed bottom-20 right-4 md:hidden flex flex-col gap-2 z-30">
+                <Button
+                  onClick={scrollToTop}
+                  variant="ghost"
+                  size="sm"
+                  className="rounded-full w-12 h-12 p-0"
+                  style={{
+                    background: 'rgba(0, 163, 226, 0.2)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(0, 163, 226, 0.3)',
+                    color: '#ffffff'
+                  }}
+                  title="Ir arriba"
+                >
+                  <ArrowUp className="w-5 h-5" />
+                </Button>
+                <Button
+                  onClick={scrollToBottom}
+                  variant="ghost"
+                  size="sm"
+                  className="rounded-full w-12 h-12 p-0"
+                  style={{
+                    background: 'rgba(0, 163, 226, 0.2)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(0, 163, 226, 0.3)',
+                    color: '#ffffff'
+                  }}
+                  title="Ir abajo"
+                >
+                  <ArrowDown className="w-5 h-5" />
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="h-full flex flex-col">
@@ -825,7 +1049,7 @@ export default function LeccionViewer() {
               )}
             </div>
           )}
-        </div>
+        </main>
       </div>
     </div>
   );
