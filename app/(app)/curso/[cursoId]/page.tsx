@@ -19,6 +19,7 @@ import { useSubtopicStarted, useSubtopicStreaming } from '@/hooks/useSubtopic';
 import { toast } from "sonner";
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 import MarkdownSkeleton from '@/components/MarkdownSkeleton';
+import { ReturnButton, SparkleButton } from '@/components/ui/ButtonsAnimated';
 
 type FlatSubtopic = {
   globalIndex: number
@@ -34,14 +35,14 @@ export default function LeccionViewer() {
   const courseId = parseInt(params?.cursoId as string || '0');
   const { data: temaryData } = useTemary(courseId, { enabled: courseId > 0 });
   const idCurso = parseInt(params?.cursoId as string);
-  const {data: infoCurso} = useCourseInfo(idCurso)
+  const { data: infoCurso } = useCourseInfo(idCurso)
 
   const flatSubtopics = useMemo<FlatSubtopic[]>(() => {
     if (!temaryData) return []
 
     let index = 0
 
-  return temaryData?.modules.flatMap((module : ModuleTemaryI) =>
+    return temaryData?.modules.flatMap((module: ModuleTemaryI) =>
       module.subtopics.map(sub => ({
         globalIndex: index++,
         moduleOrder: module.order,
@@ -457,15 +458,18 @@ export default function LeccionViewer() {
 
         {/* Versión desktop */}
         <div className="hidden md:flex items-center justify-between">
-          <Button
-            variant="ghost"
+          <ReturnButton
             onClick={handleVolver}
-            className="gap-2"
-            style={{ color: '#ffffff' }}
+            className="gap-2 mb-6"
+            width="w-32"
+            height="h-8"
+            fontSize="text-lg"
+            buttonColor="#00a2e207"
+            containerColor="#ffffffff"
+            textColor="#ffffffff"
           >
-            <ArrowLeft className="w-4 h-4" />
             Volver
-          </Button>
+          </ReturnButton>
 
           <div className="flex items-center gap-3">
             <div
@@ -527,9 +531,9 @@ export default function LeccionViewer() {
       </header>
 
       {/* Contenido principal */}
-      <div className="flex-1 overflow-hidden flex flex-col md:flex-row gap-4 md:gap-6 p-4 md:p-8">
+      <div className="flex-1 overflow-y-auto md:overflow-hidden flex flex-col md:flex-row gap-6 md:gap-6 p-4 md:p-8">
         {/* Lista de subtemas - Sidebar */}
-        <div className="w-full md:w-80 md:flex-shrink-0 flex flex-col min-h-0">
+        <div className="w-full md:w-80 md:flex-shrink-0 flex flex-col min-h-0 max-h-[170vh] md:max-h-full flex-shrink-0">
           <Card
             style={{
               background: 'rgba(38, 36, 34, 0.6)',
@@ -652,7 +656,7 @@ export default function LeccionViewer() {
         </div>
 
         {/* Contenido del subtema actual */}
-        <div className="flex-1 overflow-hidden flex flex-col min-h-0">
+        <div className="flex-1 overflow-hidden flex flex-col min-h-fit md:min-h-0">
           {modoPrueba ? (
             <div className="h-full">
             </div>
@@ -726,21 +730,8 @@ export default function LeccionViewer() {
                     {/* Botón de generar subtema */}
                     {estadosSubtemas[subtemaActual] == 'vacio' && (
                       <div>
-                        <Button
-                          onClick={handleGenerarSubtema}
-                          variant="outline"
-                          className="w-full text-sm md:text-base"
-                          style={{
-                            background: 'rgba(255, 255, 255, 0.05)',
-                            borderColor: '#00A3E2',
-                            color: '#ffffff'
-                          }}
-                        >
-                          <ClipboardList className="w-4 h-4 mr-2" />
-                          Comenzar Lección
-                        </Button>
-
-                        {subtopicIsLoading && (
+                        
+                        {subtopicIsLoading ? (
                           <p
                             className="w-full text-sm md:text-base"
                             style={{
@@ -750,7 +741,17 @@ export default function LeccionViewer() {
                             Cargando Contenido...
                           </p>
 
-                        )}
+                        ) : !isGenerating &&
+                        <SparkleButton
+                          onClick={handleGenerarSubtema}
+                          disabled={subtopicIsLoading}
+                          className='mx-auto w-[350px] text-sm md:text-base h-12 rounded-xl bg-[#ffffff0d] border-1 border-solid border-[#00A3E2]'
+                          hoverFrom='#00A3E2'
+                          hoverTo='#0078e2ff'
+                          shadowColor='#00A3E2'
+                        >
+                          Comenzar Lección
+                        </SparkleButton>}
                       </div>
                     )}
 
