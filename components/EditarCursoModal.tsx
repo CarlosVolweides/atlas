@@ -15,7 +15,7 @@ import {
   FormMessage,
 } from './ui/form';
 import { Edit2, BookOpen } from 'lucide-react';
-import { iconMapping } from '@/lib/utils/iconMapping';
+import { iconMapping, iconNames } from '@/lib/utils/iconMapping';
 
 const editarCursoSchema = z.object({
   titulo: z.string().min(1, 'El título es requerido'),
@@ -30,23 +30,23 @@ interface EditarCursoModalProps {
   courseId: number;
   initialTitle: string;
   initialImage: number | null;
-  onUpdate?: (datos: { 
+  onUpdate?: (datos: {
     courseId: number;
     titulo: string;
     image: number | null;
   }) => void;
 }
 
-export function EditarCursoModal({ 
-  open, 
-  onOpenChange, 
+export function EditarCursoModal({
+  open,
+  onOpenChange,
   courseId,
-  initialTitle, 
+  initialTitle,
   initialImage,
-  onUpdate 
+  onUpdate
 }: EditarCursoModalProps) {
   const [selectedImage, setSelectedImage] = useState<number | null>(initialImage);
-  
+
   const form = useForm<EditarCursoFormData>({
     resolver: zodResolver(editarCursoSchema),
     defaultValues: {
@@ -82,7 +82,7 @@ export function EditarCursoModal({
       titulo: data.titulo,
       image: selectedImage,
     });
-    
+
     form.reset();
     onOpenChange(false);
   };
@@ -101,10 +101,10 @@ export function EditarCursoModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent 
+      <DialogContent
         className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto"
-        style={{ 
-          background: 'rgba(38, 36, 34, 0.95)', 
+        style={{
+          background: 'rgba(38, 36, 34, 0.95)',
           backdropFilter: 'blur(20px)',
           borderColor: '#00A3E2',
           borderWidth: '1px'
@@ -112,7 +112,7 @@ export function EditarCursoModal({
       >
         <DialogHeader>
           <div className="flex items-center gap-3 mb-2">
-            <div 
+            <div
               className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center"
               style={{ background: 'linear-gradient(135deg, #00A3E2 0%, #006b9a 100%)' }}
             >
@@ -143,8 +143,8 @@ export function EditarCursoModal({
                       type="text"
                       placeholder="Ej: React Avanzado, Python para Data Science, etc."
                       className="h-10 sm:h-11 text-sm sm:text-base"
-                      style={{ 
-                        background: 'rgba(255, 255, 255, 0.1)', 
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.1)',
                         borderColor: '#00A3E2',
                         color: '#ffffff'
                       }}
@@ -169,14 +169,14 @@ export function EditarCursoModal({
                     <div className="space-y-3">
                       {/* Icono actual seleccionado */}
                       {selectedImage && (
-                        <div className="flex items-center gap-2 p-3 rounded-lg" style={{ 
+                        <div className="flex items-center gap-2 p-3 rounded-lg" style={{
                           background: 'rgba(0, 163, 226, 0.2)',
                           border: '1px solid #00A3E2'
                         }}>
                           <span className="text-xs sm:text-sm" style={{ color: '#ffffff' }}>
                             Icono seleccionado:
                           </span>
-                          <div 
+                          <div
                             className="w-8 h-8 rounded-lg flex items-center justify-center"
                             style={{ background: 'linear-gradient(135deg, #00A3E2 0%, #006b9a 100%)' }}
                           >
@@ -187,42 +187,57 @@ export function EditarCursoModal({
                           </div>
                         </div>
                       )}
-                      
+
                       {/* Grid de iconos */}
-                      <div 
-                        className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3 p-3 rounded-lg"
-                        style={{ 
+                      <div
+                        className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-8 gap-2 p-3 rounded-lg"
+                        style={{
                           background: 'rgba(255, 255, 255, 0.05)',
                           border: '1px solid rgba(0, 163, 226, 0.3)'
                         }}
                       >
                         {iconIds.map((iconId) => {
                           const Icon = iconMapping[iconId];
+                          const iconName = iconNames[iconId];
                           const isSelected = selectedImage === iconId;
-                          
+
                           return (
                             <button
                               key={iconId}
                               type="button"
                               onClick={() => handleImageSelect(iconId)}
                               className={`
-                                w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center
-                                transition-all hover:scale-110
+                                 rounded-lg flex flex-row items-center gap-2
+                                transition-all hover:scale-105
                                 ${isSelected ? 'ring-2 ring-[#00A3E2] ring-offset-2 ring-offset-[#262422]' : ''}
                               `}
                               style={{
-                                background: isSelected 
+                                background: isSelected
                                   ? 'linear-gradient(135deg, #00A3E2 0%, #006b9a 100%)'
                                   : 'rgba(255, 255, 255, 0.1)',
                                 border: isSelected ? '2px solid #00A3E2' : '1px solid rgba(0, 163, 226, 0.3)'
                               }}
                             >
-                              {Icon && <Icon className="w-6 h-6 sm:w-7 sm:h-7 text-white" />}
+                              <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0">
+                                {Icon && <Icon className="w-6 h-6 sm:w-7 sm:h-7 text-white" />}
+                              </div>
+                              <span
+                                className="text-[10px] sm:text-[14px] text-left leading-tight text-white font-medium"
+                                style={{
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                  flex: '1',
+                                  minWidth: '0'
+                                }}
+                              >
+                                {iconName}
+                              </span>
                             </button>
                           );
                         })}
                       </div>
-                      
+
                       {/* Opción sin icono */}
                       <button
                         type="button"
@@ -238,12 +253,12 @@ export function EditarCursoModal({
                           background: selectedImage === null
                             ? 'rgba(0, 163, 226, 0.2)'
                             : 'rgba(255, 255, 255, 0.05)',
-                          border: selectedImage === null 
-                            ? '2px solid #00A3E2' 
+                          border: selectedImage === null
+                            ? '2px solid #00A3E2'
                             : '1px solid rgba(0, 163, 226, 0.3)'
                         }}
                       >
-                        <div 
+                        <div
                           className="w-8 h-8 rounded-lg flex items-center justify-center"
                           style={{ background: 'rgba(255, 255, 255, 0.1)' }}
                         >
@@ -269,8 +284,8 @@ export function EditarCursoModal({
                 variant="outline"
                 onClick={handleCancel}
                 className="w-full sm:w-auto text-sm sm:text-base"
-                style={{ 
-                  background: 'rgba(255, 255, 255, 0.1)', 
+                style={{
+                  background: 'rgba(255, 255, 255, 0.1)',
                   borderColor: '#00A3E2',
                   color: '#ffffff'
                 }}
@@ -281,8 +296,8 @@ export function EditarCursoModal({
                 type="submit"
                 disabled={!form.watch('titulo')}
                 className="w-full sm:w-auto text-sm sm:text-base"
-                style={{ 
-                  background: form.watch('titulo') ? '#00A3E2' : 'rgba(0, 163, 226, 0.5)', 
+                style={{
+                  background: form.watch('titulo') ? '#00A3E2' : 'rgba(0, 163, 226, 0.5)',
                   color: '#ffffff',
                   cursor: !form.watch('titulo') ? 'not-allowed' : 'pointer'
                 }}
