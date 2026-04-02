@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "frontend-design-ultimate": {
+      "source": "kesslerio/frontend-design-ultimate-clawhub-skill",
+      "sourceType": "github",
+      "computedHash": "f3930fe855f21582eba9778971e5031294fc5cc883d7082fb1f838f7e117003a"
+    }
+  }
+}
