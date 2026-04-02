@@ -18,11 +18,10 @@ import { BookOpen, AlertCircle, Mail } from 'lucide-react';
 import { useSignIn } from '@/hooks/useAccount';
 import { useSignUp } from '@/hooks/useAccount';
 import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
+import { Space_Grotesk, JetBrains_Mono } from 'next/font/google';
 
-interface LoginScreenProps {
-  onLogin: (username: string, password: string) => boolean;
-}
+const displayFont = Space_Grotesk({ subsets: ['latin'], weight: ['400', '500', '600', '700'] });
+const monoFont = JetBrains_Mono({ subsets: ['latin'], weight: ['400', '500'] });
 
 const signInSchema = z.object({
   email: z
@@ -64,7 +63,7 @@ const signUpSchema = z.object({
 type SignInFormData = z.infer<typeof signInSchema>;
 type SignUpFormData = z.infer<typeof signUpSchema>;
 
-export default function LoginScreen({ onLogin }: LoginScreenProps) {
+export default function LoginScreen() {
   const [success, setSuccess] = useState('');
   const [activeTab, setActiveTab] = useState<'signin' | 'signup'>('signin');
   const router = useRouter();
@@ -112,55 +111,99 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
   };
 
   return (
-    <div className="min-h-screen max-h-screen flex items-center justify-center overflow-hidden p-4" style={{ background: '#0a1929' }}>
-      <div className="w-full max-w-6xl h-auto md:h-[600px] flex flex-col md:flex-row shadow-2xl rounded-3xl overflow-hidden">
-        {/* Left Panel - Image */}
-        <div className="hidden md:flex md:w-1/2 items-center justify-center relative overflow-hidden" style={{ background: '#000000' }}>
-          <div className="absolute inset-0 opacity-30" style={{ 
-            background: 'radial-gradient(circle at 30% 50%, rgba(0, 163, 226, 0.3) 0%, transparent 70%)',
-          }}></div>
+    <div
+      className="relative min-h-screen overflow-hidden bg-[#04070f] px-4 py-8 sm:px-6 md:flex md:items-center md:justify-center"
+      style={{
+        backgroundImage:
+          'radial-gradient(circle at 15% 20%, rgba(0, 184, 255, 0.18) 0%, transparent 35%), radial-gradient(circle at 85% 80%, rgba(0, 255, 198, 0.12) 0%, transparent 42%), linear-gradient(160deg, #03050d 0%, #050b1b 45%, #02040c 100%)'
+      }}
+    >
+      <div
+        className="pointer-events-none absolute inset-0 opacity-35"
+        style={{
+          backgroundImage:
+            'linear-gradient(to right, rgba(100,120,170,0.12) 1px, transparent 1px), linear-gradient(to bottom, rgba(100,120,170,0.12) 1px, transparent 1px)',
+          backgroundSize: '42px 42px',
+          maskImage: 'radial-gradient(circle at center, black 35%, transparent 90%)'
+        }}
+      />
+
+      <div className="relative z-10 mx-auto grid w-full max-w-5xl overflow-hidden rounded-3xl border border-cyan-300/30 bg-[#070d1d]/70 shadow-[0_0_60px_rgba(0,180,255,0.2)] backdrop-blur-xl md:grid-cols-[0.95fr_1.05fr]">
+        <div className="relative hidden border-r border-cyan-300/20 p-10 md:flex md:flex-col md:justify-between">
+          <div>
+            <div className={`inline-flex items-center gap-2 rounded-full border border-cyan-300/35 px-3 py-1 text-[11px] uppercase tracking-[0.28em] text-cyan-200/90 ${monoFont.className}`}>
+              Atlas Protocol
+            </div>
+            <h2 className={`mt-6 max-w-xs text-4xl font-semibold leading-tight text-cyan-50 ${displayFont.className}`}>
+              Accede a tu laboratorio de aprendizaje.
+            </h2>
+            <p className="mt-4 max-w-sm text-sm leading-relaxed text-slate-300">
+              Disena rutas tecnicas personalizadas con IA, seguimiento por modulos y avance en tiempo real.
+            </p>
+          </div>
+
+          <div className={`space-y-2 text-xs text-cyan-100/80 ${monoFont.className}`}>
+            <p>&gt; adaptive-learning: online</p>
+            <p>&gt; ai-tutor: synced</p>
+            <p>&gt; progress-engine: stable</p>
+          </div>
+
+          <div className="pointer-events-none absolute -bottom-24 -left-20 h-56 w-56 rounded-full bg-cyan-400/20 blur-3xl" />
         </div>
 
-        {/* Right Panel - Form */}
-        <div className="w-full md:w-1/2 p-6 sm:p-8 md:p-12 flex flex-col" style={{ background: 'linear-gradient(135deg, rgba(0, 10, 20, 0.9) 0%, rgba(0, 30, 50, 0.85) 50%, rgba(0, 60, 90, 0.8) 100%)', backdropFilter: 'blur(20px)', borderLeft: '1px solid rgba(0, 163, 226, 0.2)' }}>
-          {/* Logo */}
-          <div className="flex items-center gap-2 mb-6 sm:mb-8 md:mb-8"> {/*Cambiar margin bottom a menor*/}
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #00A3E2 0%, #006b9a 100%)' }}>
-              <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+        <div className="relative p-6 sm:p-8 md:p-10">
+          <div className="mb-8 flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-cyan-200/60 bg-cyan-400/20">
+              <BookOpen className="h-5 w-5 text-cyan-100" />
             </div>
-            <span className="text-lg sm:text-xl" style={{ color: '#ffffff' }}>Atlas</span>
+            <div>
+              <p className={`text-[11px] uppercase tracking-[0.25em] text-cyan-200/80 ${monoFont.className}`}>Nodo seguro</p>
+              <p className={`text-xl font-semibold text-cyan-50 ${displayFont.className}`}>Atlas</p>
+            </div>
           </div>
 
-          {/* Welcome Message */}
-          <div className="mb-6 sm:mb-8">
-            <h1 className="text-2xl sm:text-3xl mb-2" style={{ color: '#ffffff' }}>Bienvenido</h1>
-            <p className="text-xs sm:text-sm" style={{ color: '#cccccc' }}>Por favor ingresa tus datos</p>
+          <div className="mb-6">
+            <h1 className={`text-3xl font-semibold tracking-tight text-white sm:text-4xl ${displayFont.className}`}>
+              {activeTab === 'signin' ? 'Bienvenido de vuelta' : 'Crear acceso'}
+            </h1>
+            <p className="mt-2 text-sm text-slate-300">
+              {activeTab === 'signin'
+                ? 'Ingresa tus credenciales para continuar con tu progreso.'
+                : 'Registra tu cuenta para iniciar tu ruta personalizada.'}
+            </p>
           </div>
 
-          {/* Tabs */}
-          <div className="flex gap-3 sm:gap-4 mb-6 sm:mb-8">
+          <div className="mb-7 grid grid-cols-2 rounded-xl border border-cyan-300/25 bg-cyan-950/40 p-1">
             <button
               onClick={() => {
                 setActiveTab('signin');
                 resetForms();
               }}
-              className="flex-1 py-2 px-3 sm:px-4 rounded-lg transition-all text-sm sm:text-base"
+              className={`rounded-lg px-3 py-2 text-sm transition-all ${displayFont.className}`}
               style={{
-                background: activeTab === 'signin' ? '#00A3E2' : 'rgba(255, 255, 255, 0.1)',
-                color: '#ffffff'
+                background:
+                  activeTab === 'signin'
+                    ? 'linear-gradient(120deg, rgba(94,234,212,0.95) 0%, rgba(6,182,212,0.9) 100%)'
+                    : 'transparent',
+                color: activeTab === 'signin' ? '#03121A' : '#cbd5e1',
+                boxShadow: activeTab === 'signin' ? '0 0 20px rgba(34, 211, 238, 0.35)' : 'none'
               }}
-            >Iniciar
-               Sesión
+            >
+              Iniciar sesion
             </button>
             <button
               onClick={() => {
                 setActiveTab('signup');
                 resetForms();
               }}
-              className="flex-1 py-2 px-3 sm:px-4 rounded-lg transition-all text-sm sm:text-base"
+              className={`rounded-lg px-3 py-2 text-sm transition-all ${displayFont.className}`}
               style={{
-                background: activeTab === 'signup' ? '#00A3E2' : 'rgba(255, 255, 255, 0.1)',
-                color: '#ffffff'
+                background:
+                  activeTab === 'signup'
+                    ? 'linear-gradient(120deg, rgba(94,234,212,0.95) 0%, rgba(6,182,212,0.9) 100%)'
+                    : 'transparent',
+                color: activeTab === 'signup' ? '#03121A' : '#cbd5e1',
+                boxShadow: activeTab === 'signup' ? '0 0 20px rgba(34, 211, 238, 0.35)' : 'none'
               }}
             >
               Registrarse
@@ -170,28 +213,26 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
           {/* Sign In Form */}
           {activeTab === 'signin' && (
             <Form {...signInForm}>
-              <form onSubmit={signInForm.handleSubmit(handleLogin)} className="space-y-4 sm:space-y-5 flex-1">
+              <form onSubmit={signInForm.handleSubmit(handleLogin)} className="space-y-5">
                 <FormField
                   control={signInForm.control}
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs sm:text-sm" style={{ color: '#ffffff' }}>
+                      <FormLabel className={`text-xs uppercase tracking-[0.18em] text-slate-300 ${monoFont.className}`}>
                         Correo Electrónico
                       </FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" style={{ color: '#cccccc' }} />
+                          <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-cyan-200/90" />
                           <Input
                             {...field}
                             type="email"
                             placeholder="Ingresa tu correo"
                             disabled={signInForm.formState.isSubmitting}
-                            className="pl-10 h-11 sm:h-12 text-sm sm:text-base"
+                            className={`h-11 border-cyan-300/30 bg-cyan-950/45 pl-10 text-sm text-cyan-50 placeholder:text-slate-400 focus-visible:ring-1 focus-visible:ring-cyan-300/70 ${displayFont.className}`}
                             style={{ 
-                              background: 'rgba(255, 255, 255, 0.1)', 
-                              borderColor: '#00A3E2',
-                              color: '#ffffff'
+                              boxShadow: 'inset 0 0 0 1px rgba(12, 74, 110, 0.45)'
                             }}
                           />
                         </div>
@@ -206,7 +247,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs sm:text-sm" style={{ color: '#ffffff' }}>
+                      <FormLabel className={`text-xs uppercase tracking-[0.18em] text-slate-300 ${monoFont.className}`}>
                         Contraseña
                       </FormLabel>
                       <FormMessage />
@@ -216,11 +257,9 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                           type="password"
                           placeholder="Ingresa tu contraseña"
                           disabled={signInForm.formState.isSubmitting}
-                          className="h-11 sm:h-12 text-sm sm:text-base"
+                          className={`h-11 border-cyan-300/30 bg-cyan-950/45 text-sm text-cyan-50 placeholder:text-slate-400 focus-visible:ring-1 focus-visible:ring-cyan-300/70 ${displayFont.className}`}
                           style={{ 
-                            background: 'rgba(255, 255, 255, 0.1)', 
-                            borderColor: '#00A3E2',
-                            color: '#ffffff'
+                            boxShadow: 'inset 0 0 0 1px rgba(12, 74, 110, 0.45)'
                           }}
                         />
                       </FormControl>
@@ -230,9 +269,9 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                 />
 
                 {signInForm.formState.errors.root && (
-                  <Alert variant="destructive" className="py-2 sm:py-3">
+                  <Alert variant="destructive" className="border-red-500/50 bg-red-900/30 py-2">
                     <AlertCircle className="h-4 w-4" />
-                    <AlertDescription className="text-xs sm:text-sm">
+                    <AlertDescription className="text-xs text-red-100">
                       {signInForm.formState.errors.root.message}
                     </AlertDescription>
                   </Alert>
@@ -240,9 +279,13 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
 
                 <Button 
                   type="submit" 
-                  className="w-full h-11 sm:h-12 text-sm rounded-lg" 
+                  className={`h-11 w-full rounded-lg text-sm font-medium transition-all hover:brightness-110 ${displayFont.className}`} 
                   disabled={signInForm.formState.isSubmitting}
-                  style={{ background: '#00A3E2', color: '#ffffff' }}
+                  style={{
+                    background: 'linear-gradient(120deg, rgba(45,212,191,1) 0%, rgba(34,211,238,1) 100%)',
+                    color: '#03121a',
+                    boxShadow: '0 0 28px rgba(34, 211, 238, 0.45)'
+                  }}
                 >
                   {signInForm.formState.isSubmitting ? 'Iniciando sesión...' : 'Continuar'}
                 </Button>
@@ -253,28 +296,26 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
           {/* Sign Up Form */}
           {activeTab === 'signup' && (
             <Form {...signUpForm}>
-              <form onSubmit={signUpForm.handleSubmit(handleRegister)} className="space-y-4 sm:space-y-5 flex-1">
+              <form onSubmit={signUpForm.handleSubmit(handleRegister)} className="space-y-5">
                 <FormField
                   control={signUpForm.control}
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs sm:text-sm" style={{ color: '#ffffff' }}>
+                      <FormLabel className={`text-xs uppercase tracking-[0.18em] text-slate-300 ${monoFont.className}`}>
                         Correo Electrónico
                       </FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" style={{ color: '#cccccc' }} />
+                          <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-cyan-200/90" />
                           <Input
                             {...field}
                             type="email"
                             placeholder="Ingresa tu correo"
                             disabled={signUpForm.formState.isSubmitting}
-                            className="pl-10 h-11 sm:h-12 text-sm sm:text-base"
+                            className={`h-11 border-cyan-300/30 bg-cyan-950/45 pl-10 text-sm text-cyan-50 placeholder:text-slate-400 focus-visible:ring-1 focus-visible:ring-cyan-300/70 ${displayFont.className}`}
                             style={{ 
-                              background: 'rgba(255, 255, 255, 0.1)', 
-                              borderColor: '#00A3E2',
-                              color: '#ffffff'
+                              boxShadow: 'inset 0 0 0 1px rgba(12, 74, 110, 0.45)'
                             }}
                           />
                         </div>
@@ -289,7 +330,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs sm:text-sm" style={{ color: '#ffffff' }}>
+                      <FormLabel className={`text-xs uppercase tracking-[0.18em] text-slate-300 ${monoFont.className}`}>
                         Contraseña
                       </FormLabel>
                       <FormControl>
@@ -298,11 +339,9 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                           type="password"
                           placeholder="Crea una contraseña"
                           disabled={signUpForm.formState.isSubmitting}
-                          className="h-11 sm:h-12 text-sm sm:text-base"
+                          className={`h-11 border-cyan-300/30 bg-cyan-950/45 text-sm text-cyan-50 placeholder:text-slate-400 focus-visible:ring-1 focus-visible:ring-cyan-300/70 ${displayFont.className}`}
                           style={{ 
-                            background: 'rgba(255, 255, 255, 0.1)', 
-                            borderColor: '#00A3E2',
-                            color: '#ffffff'
+                            boxShadow: 'inset 0 0 0 1px rgba(12, 74, 110, 0.45)'
                           }}
                         />
                       </FormControl>
@@ -312,16 +351,20 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                 />
 
                 {success && (
-                  <Alert className="py-2 sm:py-3" style={{ background: '#e8f5e9', borderColor: '#4caf50', color: '#2e7d32' }}>
-                    <AlertDescription className="text-xs sm:text-sm">{success}</AlertDescription>
+                  <Alert className="border-emerald-300/40 bg-emerald-800/20 py-2 text-emerald-100">
+                    <AlertDescription className="text-xs">{success}</AlertDescription>
                   </Alert>
                 )}
 
                 <Button 
                   type="submit" 
-                  className="w-full h-11 sm:h-12 text-sm rounded-lg" 
+                  className={`h-11 w-full rounded-lg text-sm font-medium transition-all hover:brightness-110 ${displayFont.className}`} 
                   disabled={signUpForm.formState.isSubmitting}
-                  style={{ background: '#00A3E2', color: '#ffffff' }}
+                  style={{
+                    background: 'linear-gradient(120deg, rgba(45,212,191,1) 0%, rgba(34,211,238,1) 100%)',
+                    color: '#03121a',
+                    boxShadow: '0 0 28px rgba(34, 211, 238, 0.45)'
+                  }}
                 >
                   {signUpForm.formState.isSubmitting ? 'Creando cuenta...' : 'Crear cuenta'}
                 </Button>
@@ -329,11 +372,8 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
             </Form>
           )}
 
-          {/* Footer Text */}
-          <div className="mt-6 sm:mt-8 text-center">
-            <p className="text-xs" style={{ color: '#cccccc' }}>
-              Únete a Atlas para crear tu plan de estudio personalizado y acceder a tu panel de aprendizaje.
-            </p>
+          <div className={`mt-7 text-center text-[11px] uppercase tracking-[0.18em] text-slate-400 ${monoFont.className}`}>
+            Conexión cifrada · Atlas Learning Engine
           </div>
         </div>
       </div>
